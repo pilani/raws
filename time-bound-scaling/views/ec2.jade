@@ -1,0 +1,78 @@
+html
+  head    
+    script(type='text/javascript', src='/js/jquery-1.7.1.min.js') 
+    script(type='text/javascript')
+     
+     var scgArray = new Array();
+     
+     $.getJSON("/ec2/getSecurityGroups", function(data){
+      alert("json");
+      scgArray = data;
+     });
+     
+     function test(){
+      alert(scgArray[34]);
+     }
+   
+     function load(){
+      for(var i in scgArray){
+       scgArray[i] = new SecurityGroup(i, scgArray[i]);
+      }
+     }
+     
+     function dosomething(){
+      var scgList = document.getElementById("scgList");
+      document.getElementById("securityGroup").value = scgList.options[scgList.selectedIndex].text;
+     }   
+  
+  body
+    input(type='button', name='click', value='click', onclick='alert("a");')
+    input(type='button', name='group', value='group', onclick='test()')
+    form#localization
+      | Select a SecurityGroup:
+      select#scgList(name = , onclick = 'dosomething()')
+        
+      p
+       | Security Group :
+       input#securityGroup(type='text', size='20')  
+      
+
+
+
+
+
+!!! 5
+html
+  head
+    title Arrays test
+    meta(http-equiv='Content-Type', content='text/html; charset=iso-8859-1')
+    script(type='text/javascript', language='JavaScript')
+      function State(State_id, State_name) {
+      this.State_id = State_id
+      this.State_name = State_name
+      }
+      var arrStates = new Array()
+      arrStates [0] = new State(1, "State1");
+      arrStates [1] = new State(2, "State2");
+      arrStates [2] = new State(3, "State3");
+      arrStates [3] = new State(4, "State4");
+      function City(City_name, State_num) {
+      this.City_name = City_name
+      this.State_num = State_num
+      }
+      var arrCities = new Array()
+      arrCities[0] = new City("City1", 1);
+      arrCities[1] = new City ("City2", 1);
+      arrCities[2] = new City ("City3", 2);
+      arrCities[3] = new City ("City4", 2);
+      arrCities[4] = new City ("City5", 2);
+  body
+    form#localization
+      | States:
+      select(name='countries')
+      br
+      br
+      | Cities:
+      select(name='cities')
+
+

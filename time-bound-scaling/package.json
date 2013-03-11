@@ -1,0 +1,19 @@
+{
+  "name": "raws-node",
+  "version": "0.0.1",
+  "private": "true",
+  "dependencies": {
+    "express": "*",
+    "jade": "*",
+    "stylus": "*",
+    "nib": "*",
+"mongoose":"*",
+"passport":"*",
+"passport-google-oauth":"*",
+"winston":"*",
+ "aws-lib": "*",
+"aws-sdk":"*",
+"awssum":"*"
+  }
+}
+

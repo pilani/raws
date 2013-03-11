@@ -1,0 +1,142 @@
+ //backup ec2
+        //backup ami'
+           
+        //backup security groups
+
+
+
+//run everyday
+//backup ami/snapshots
+ //getAutoCreatedAmi's
+  //filer ami's not already present -->yet to be done
+    //copy to different region
+    // delete ami's older than nth day 
+
+Notes:
+1.If system crashes, the process will stop.Put logic to start the process again from where it stopped.
+2.If the copy fails for a snapshot then it should go in the next day process or retry attempt should be made at the same time.
+3.Copy only those which were not copied already.only for new AMIs created.for that fetch snapshots for the regions and copy only the difference.
+4.Keep copy and delete as separate process which should run in parallel so that there is no dependancy.
+
+launch()-->
+ //iterate over all the clients present in config and create clients.
+ //launch copy
+ //schedule launch everyday
+
+ //delete/purge 
+ //create destination clients for all the accounts in dest.
+ //launch delete separately
+
+
+
+//weekly once
+//backup all security groups
+ //any new security group is created update it in the backup weekly    
+
+//back up S3
+    //Backup buckets
+
+   //backup objects in buckets
+
+
+//daily once
+  //back up buckets
+    //check for any new buckets everyday
+      //Ifany new bucket is created add it to the backup
+**check can be done using timestamp as reference
+
+
+
+//daily once
+  //back images bucket wise
+   //check for new objects uploaded
+    //update backup if new objects found
+**check can be done using timestamp as reference
+
+
+
+
+
+//TODO ---
+1) Tracking each action in mongo DB - 1  ( Copy :: Scheduler triggered at (time)---Fetching List of Security Groups from S Region -  Singapore + No of Sec Groups - 34,fetching amis- No of Amis fetched ,Fetching list of Snapshots to be copied - No. of Snapshots fetched -Snapshot copy called - Snapshot with snap Id copied at to N.Virginia at (time). 
+Delete:Scheduler triggered at(time)--Fetching list of Snapshots present in the destination region - segregating snapshots based on creation date - no of snapshots to be deleted - delete trigerred at(time)
+)
+2) Logging exception and info to file using wintons - 2
+3) Create instance using copied snapshot in destination region - 4
+4) Bug fix-- Snapshot creation time -3 
+5) Testing end to end - 6
+6) Expose REST API if we are planing to build overall stats for disaster recovery -5
+7) Commit code - 7
+8)
+
+
+
+Logger.js
+{
+ function log()messge,type,logger{
+if(config.get[“”[ne] == tru)
+{
+  if(type ===)
+	logg.er(mess);
+}
+}
+}
+
+AWSConnectionUtil.JS
+
+Function createClient(sec,acc,region,accountid){
+ 
+ con
+}
+
+awscon = require('AWSC');
+awscon.create()
+
+
+
+SecurityGroup.js
+
+list()
+getPort()
+
+
+SecurityGrouop.js
+EC2Dis
+AWSCon.js
+Logg.js
+Tracking.js
+
+
+
+  //get the list of accounts from config
+
+  //iterate each account form src and dest client 
+
+  //get list of securitygroups  for src client
+
+  // iterate each sec group then get snapshot for security group
+
+  //call ec2copy snapshot js file
+
+
+
+ss_aws@redbus.in
+redbus.in
+owner:609006702305
+
+aws@redbus.in
+redbus
+owner:317993448580
+
+platform-aws@redbus.in
+redbus.in
+owner:049585781011
+
+AKIAINB3J4KJCDTY3VOQ","mcKbromTj0JEDMEkrTILvp4CX73mlATzLyqQq/Qt"
+
+1    2     3    4   0    6
+     1          2    1   1
+
+
+     // read the values from config, no hard coding
+     // for all failure case alert should trigger to developer.

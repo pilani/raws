@@ -1,0 +1,26 @@
+!!!
+html
+  head
+    title #{title} - R><S
+    link(rel='stylesheet', href='/stylesheets/style.css')  
+  body
+    header
+      h1 R--S 
+      - if(user!=null)
+            h2 welcome #{user.name}
+      else
+        h2 not loggedin
+        ul#Authenticate
+        li
+          a(href='/auth/google', style='border: 0px')
+            img(style='border: 0px', src='https://si0.twimg.com/images/dev/buttons/sign-in-with-twitter-l.png')
+
+      
+    .container
+      .main-content
+        block content
+      .sidebar
+        block sidebar
+    footer
+      p Running on node with Express, Jade and Stylus
+
