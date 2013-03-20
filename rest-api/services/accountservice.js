@@ -27,7 +27,7 @@ exports.getaccounts = function(req,res) {
 }
 
 
-exports.getservicebyaccount = function(req,res) {
+exports.getservicesbyaccount = function(req,res) {
 	res.send("impl is pending....");
     res.end();
 }
