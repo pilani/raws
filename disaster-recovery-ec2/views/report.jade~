@@ -1,0 +1,7 @@
+html
+head
+   title Disaster Recovery Detailed Report
+   link(rel='stylesheet', href='/stylesheets/bqhome.css')
+   script(type='text/javascript', src='/js/jquery-1.7.1.min.js')   
+   script(type='text/javascript', src='/js/jquery.blockUI.js')
+   script(type='text/javascript')	 function initPendingFile()	{	$.getJSON("/bqPendingFiles",function(data){	alert(data);	var html='<table id="testTable" border="1"><thead><tr><th>File Name</th></tr></thead><tbody>';	for(var obj in data){	html+='<tr><td>'+data[obj].name+'</tr></td>';	}	$('#divPendingFiles').append(html);	}).error(function(xhr,status,error) { alert("No Data Found"); });	} 
