@@ -13,38 +13,44 @@ var logging=require('./logging.js');
   });
 
   var trackCopySchema = mongoose.Schema({
-    schedulerTriggerTime: Date
-   , accountName:         String
-  , fetchngLstOfSecGps  : String
-  , nosOfSecGpsFetchd   : String
-  , fetchngLstOfAMIs    : String
-  , nosOfAmisFetchd     : String
-  ,fetchngLstOfSnpshts  : String
-  ,nosOfSnpshotsFetchd  : String
-  ,snpshtCopyCld        : String
-  ,groupId              : String
-  ,snapShotCopySuccess  : String
-  ,snapshotCopyFailure  : String
-  ,timestamp            : Date
+    schedulerTriggerTime:Date
+   , accountName        :String
+  , fetchngLstOfSecGps  :String
+  , nosOfSecGpsFetchd   :String
+  , fetchngLstOfAMIs    :String
+  , nosOfAmisFetchd     :String
+  ,groupId              :String
+  ,AMICopySuccess       :String
+  ,AMICopyFailure       :String
+  ,timestamp            :String
   ,status               :String
   ,finalasyncCall       :String
   ,finalWaterfallCall   :String
-  ,noSnapsPresent       :String
-  ,nosOfSnapsToBeCopied :String
+  ,noAmisPresent        :String
+  ,nosOfAmisToBeCopied  :String
   ,copyFailed           :String
   ,copyCmplt            :String
-  ,copySnap             :String
+  ,copyAmi              :String
+  ,trackReportStatus    :String
 });
 
  
 var trackDeleteSchema=mongoose.Schema({
-schedulerTriggerTime:     Date 
-,fetchngLstOfSnpshts :    String
-,nosOfSnapshotsToBeDltd : Number
-,groupId              :   String
-,dltTriggrdAt:            Date
-,snapshotDltSuccess  :    String
-,snapShotDltFailed  :     String
+schedulerTriggerTime   :Date 
+,finalDelAsyncCall     :String
+,finalDelWaterfallCall :Number
+,groupId               :String
+,fetchngImages         :Date
+,amisFetched           :String
+,startDate             :String
+,deleteinitiated       :String
+,nosOfImagesToBeDltd   :String
+,deleteImage           :String
+,deRegisterAMI         :String
+,status                :String
+,groupId               :String
+,timestamp             :String
+,trackReportStatus     :String
 
 });
 
@@ -64,7 +70,7 @@ function saveTracker(err,result){
 }
 
 
-function copySaveTrack(schemaAttrib, message,timestamp,gpId,status){
+exports.copySaveTrack=function copySaveTrack(schemaAttrib, message,trackReportStatus,timestamp,gpId,status){
 
     var track = new trackCopy({});
    
@@ -72,6 +78,7 @@ function copySaveTrack(schemaAttrib, message,timestamp,gpId,status){
     track.setValue("status",status);
     track.setValue("groupId",gpId);
     track.setValue("timestamp",timestamp);
+    track.setValue("trackReportStatus",trackReportStatus);
     if(status=="S"){
       logging.logInfo(message);
     }
@@ -86,19 +93,18 @@ function copySaveTrack(schemaAttrib, message,timestamp,gpId,status){
     });
 }
 //trackFailure();
-function trackFailure(){
+function trackFailure(callback){
    var today = new Date();
-   var date=today.toDateString();
    var d2=new Date();
-   d2.setHours(today.getHours() - 24);
+   d2.setHours(today.getHours() -24);
    var status; 
 
     trackCopy.find().sort({timestamp:-1}).limit(1).exec(function(err, result) { 
      
       for(var i in result){
-          if(result[i].timestamp<d2){
-          console.log("inside if");
-          status="Failure";
+        var d=new Date(result[i].timestamp);
+          if(d<d2){
+             status="Failure";
           } 
           else if(result[i].status=="S"){
                status="Success";
@@ -106,11 +112,46 @@ function trackFailure(){
           else{
              status="Failure";
           }
-      console.log("status" + status);
       }
+      callback(status);
     });
 }
-exports.trackFailure=trackFailure;
 
-exports.copySaveTrack=copySaveTrack;
+function trackFailureReport(callback){
+   var today = new Date();
+   var statusArray=new Array();
+   var date=today.toDateString();
+   
+    trackCopy.find({timestamp:{$regex:date}},function(err,result){
+     
+      for(var i in result){
+          
+      statusArray[i]=new monitorParams(result[i].trackReportStatus,result[i].timestamp,result[i].groupId,result[i].status);
+      }
+      callback(JSON.stringify(statusArray));
+    });
+}
 
+exports.siteMonitoringStatus = function(req,res) {
+trackFailure(function (response) {
+res.send(response);
+res.end();
+});
+}; 
+
+exports.siteMonitoringDetailedReport = function(req, res) {
+trackFailureReport(function (response) {
+res.send(response);
+res.end();
+});
+};
+
+function monitorParams(trackReportStatus,timestamp,gpId,status){
+
+    this.trackReportStatus=trackReportStatus;
+    this.timestamp=timestamp;
+    this.gpId=gpId;
+    this.status=status;
+  
+
+}
