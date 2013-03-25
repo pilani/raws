@@ -30,7 +30,7 @@ function launchDelete(){
 
 }
 
-launchDelete();
+//launchDelete();
 exports.launchDelete=launchDelete;
 
 function iterator(credentials, callback){

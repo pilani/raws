@@ -25,7 +25,7 @@ function launchCopyAMIs(){
     });
 
 }
-launchCopyAMIs();
+//launchCopyAMIs();
 exports.launchCopyAMIs=launchCopyAMIs;
 
 function iterator(credentials, callback){   
@@ -226,15 +226,12 @@ function generateGroupId(account){
 
 function generateTimestamp(){
 
-var today=new Date();
-
-var date=today.toDateString();
-var time=today.toTimeString();
-
-return date+" "+time;
-
-
+    var today=new Date();
+    var date=today.toDateString();
+    var time=today.toTimeString();
+    return date+" "+time;
 }
+exports.generateTimestamp=generateTimestamp;
 
 function trackProcess(schemaAttrib, message,gpId,status){
 

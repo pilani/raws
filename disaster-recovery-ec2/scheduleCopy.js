@@ -11,9 +11,9 @@ rule.minute = cfg.config["ruleCopyMinute"];;
 
 var j = schedule.scheduleJob(rule, function(){
 	
-	track.copySaveTrack("schedulerTriggerTime",new Date(),"Scheduler for copy Triggered at ");
+	ec2DisasterRec.trackProcess("schedulerTriggerTime","Scheduler for copy Triggered at ","default","S");
 
-	ec2DisasterRec.launchCopySnapShots();
+	ec2DisasterRec.launchCopyAMIs();
 
 	});
 
