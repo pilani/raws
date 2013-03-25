@@ -6,8 +6,8 @@ var logging=require('./logging.js');
 
 var rule = new schedule.RecurrenceRule();
 rule.dayOfWeek = [0, new schedule.Range(1, 7)];
-rule.hour = 15;
-rule.minute = 23;
+rule.hour = cfg.config["ruleCopyHour"];
+rule.minute = cfg.config["ruleCopyMinute"];;
 
 var j = schedule.scheduleJob(rule, function(){
 	

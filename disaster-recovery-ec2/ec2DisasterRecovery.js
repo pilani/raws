@@ -1,14 +1,14 @@
 var async=require('async');
 var cfg =require('./config.js');
 var ec2Client=require('./ec2Client.js');
-var ec2Copy=require('./ec2CopySnapshotRegions');
+var ec2Copy=require('./ec2CopyAMIAcrossRegions');
 var track=require('./Tracking.js');
 var logging=require('./logging.js');
 
 
-function launchCopySnapShots(){
+function launchCopyAMIs(){
 
-    logging.logInfo("launchCopysnapshotsCalled");
+    logging.logInfo("launchCopyAMIs Called");
     var kvmap = cfg.config["ACCOUNT_KEY_COMBINATIONS"]  
     //Trigerring copy for all accounts read from config
     async.forEachSeries(Object.keys(kvmap),iterator,function(err,callback){
@@ -16,48 +16,43 @@ function launchCopySnapShots(){
         if(err)
         {
             trackProcess("finalasyncCall","error in async For Each for account" +Object.keys(kvmap)+" MESSAGE :" +err,gpId,"F");
-             siteMonitor();
-             callback(err);
+            callback(err);
         } 
         else{
-             trackProcess("finalasyncCall","final callback called",gpId,"S");
-             setTimeout(function(){siteMonitor();},30*000);
-                     
+            trackProcess("finalasyncCall","final callback called",gpId,"S");
+                    
        }   
     });
 
 }
-launchCopySnapShots();
-exports.launchCopySnapShots=launchCopySnapShots;
+launchCopyAMIs();
+exports.launchCopyAMIs=launchCopyAMIs;
 
 function iterator(credentials, callback){   
    var gpId=generateGroupId(credentials);
     
     async.waterfall([function dummy(callback){callback(null, credentials);} ,
         ec2Client.getSrcregEc2Client,ec2Client.getDestregEc2Client,getSecurityGroups,
-        fetchAMI,fetchSnapshots,
-        sortRedundantSnaps,launchCopy],function(err,result ){
+        fetchAMI,sortRedundantAMIs,launchCopy],function(err,result ){
         if(err){
-            trackProcess("finalWaterfallCall","error in calling async.waterfall for account MESSAGE : "+err,gpId,"F");
-           
+            trackProcess("finalWaterfallCall","error in calling async.waterfall for account "+credentials+ " MESSAGE : "+err,gpId,"F");
             callback(err);
         }
-            else{
-                 trackProcess("finalWaterfallCall","final Iterator callback",gpId,"S");
-                console.log("iterator callback");
-                callback();
-            }
+        else{
+            trackProcess("finalWaterfallCall","final Iterator callback",gpId,"S");
+            callback();
+        }
     });
 }
 
 function getSecurityGroups(srcEC2,destEC2,account,sorce,owner,callback){
 
     var gpId=generateGroupId(account);
-    trackProcess("fetchngLstOfSecGps","Fetching List Of security Groups",gpId,"S");
+    trackProcess("fetchngLstOfSecGps","Fetching List Of security Groups for owner " +owner,gpId,"S");
     srcEC2.client.describeSecurityGroups(null,function(err,data){
 
         if(err){
-            trackProcess("nosOfSecGpsFetchd","Error Fetching security groups",gpId,"F");
+            trackProcess("nosOfSecGpsFetchd","Error Fetching security groups for owner " +owner,gpId,"F");
           
             callback(err);
         }
@@ -65,7 +60,8 @@ function getSecurityGroups(srcEC2,destEC2,account,sorce,owner,callback){
         else{
            
             var secGpArr=createSecurityGroupList(data);
-            trackProcess("nosOfSecGpsFetchd","Nos Of Security groups Fetched"+secGpArr.length,gpId,"F");
+            trackProcess("nosOfSecGpsFetchd","Nos Of Security groups Fetched "+secGpArr.length+" for owner " 
+                +owner,gpId,"S");
             callback(null, secGpArr,srcEC2,destEC2,gpId,sorce,owner);
         }   
         
@@ -75,7 +71,7 @@ function getSecurityGroups(srcEC2,destEC2,account,sorce,owner,callback){
 
 function fetchAMI(secGparray,srcEC2,destEC2,gpId,sorce,owner,callback){
 
-    trackProcess("fetchngLstOfAMIs","Fetching List Of AMIs",gpId,"S");
+    trackProcess("fetchngLstOfAMIs","Fetching List Of AMIs for owner "+owner ,gpId,"S");
     var obj1={Owners:[owner]};
     srcEC2.client.describeImages(obj1,function(error,data){
         if(error){
@@ -86,44 +82,23 @@ function fetchAMI(secGparray,srcEC2,destEC2,gpId,sorce,owner,callback){
 
         else{
             var amiArray = createAmisList(data,secGparray);     
-            trackProcess("nosOfAmisFetchd","Nos Of AMIs fetched.."+amiArray.length,gpId,"F");
+            trackProcess("nosOfAmisFetchd","Nos Of AMIs fetched.."+amiArray.length+" for owner "+owner,gpId,"S");
+            callback(null,amiArray,srcEC2,destEC2,gpId,sorce,owner);
         }
 
-        callback(null,amiArray,srcEC2,destEC2,gpId,sorce,owner);
+       
     });
     
 }
 
-
-function fetchSnapshots(amiArray,srcEC2,destEC2,gpId,sorce,owner,callback){
-         
-    trackProcess("fetchngLstOfSnpshts","Fetching list of snapshots",gpId,"S");
-    var obj={OwnerIds:[owner]};
-    srcEC2.client.describeSnapshots(obj,function(error,data){
-
-        if(error){
-            trackProcess("nosOfSnpshotsFetchd","Error in Fetching Snapshots for owner.. "+owner,gpId,"F");
-            
-            callback(error);
-        }
-    
-       var snapArr=createSnapshotList(data,amiArray);
-       trackProcess("nosOfSnpshotsFetchd","Nos Of Snapshots fetched.." +snapArr.length,gpId,"S"); 
-       callback(null,snapArr,destEC2,gpId,sorce,owner);
-        
-    });
-}
-
-
-function launchCopy(snapArr,destEC2,gpId,sorce,owner,callback){
-
+function launchCopy(amiArray,destEC2,gpId,sorce,owner,callback){
     var keyArray=new Array();
-    for(var snap in snapArr){
-        var key=new copyParameters(snapArr[snap],destEC2,gpId,sorce,owner);
-        keyArray[snap]=key;
+    for(var ami in amiArray){
+        var key=new copyParameters(amiArray[ami],destEC2,gpId,sorce,owner);
+        keyArray[ami]=key;
     }
     ec2Copy.launcher(keyArray,callback);
-   
+       
 }
 
 
@@ -133,9 +108,9 @@ function siteMonitor(){
     
 }
 
-function copyParameters(snapId,destEC2,gpId,sorce,owner){
+function copyParameters(amiId,destEC2,gpId,sorce,owner){
 
-    this.snapId=snapId;
+    this.amiId=amiId;
     this.destEC2=destEC2;
     this.gpId=gpId;
     this.sorce=sorce;
@@ -143,58 +118,56 @@ function copyParameters(snapId,destEC2,gpId,sorce,owner){
 
 }
 
+function sortRedundantAMIs(amiArray,srcEC2,destEC2,gpId,sorce,owner,callback){
 
-function sortRedundantSnaps(snapArr,destEC2,gpId,sorce,owner,callback){
-
-    var obj={OwnerIds:[owner]};
-    destEC2.client.describeSnapshots(obj,function(error,data){
+    var obj={Owners:[owner]};
+    destEC2.client.describeImages(obj,function(error,data){
 
         if(error){
-            trackProcess("noSnapsPresent","Error in describe snapshots in sortRedundantSnaps for owner "+owner+"MESSAGE : "+error,gpId,"F");
-          
+            trackProcess("noAmisPresent","Error in describe Images in sortRedundantAMIs for owner "+owner+"MESSAGE : "+error,gpId,"F");
             callback(error);
             
         }
 
         else{
-            if(data.Snapshots[0]==undefined){
-                    trackProcess("noSnapsPresent","No Snapshots present in destination region..So copying all Final" 
-                    +"Snapshot array to be copied "+snapArr,gpId,"S");
+            if(data.Images[0]==undefined){
+                    trackProcess("noAmisPresent","No AMIs present in destination region for owner"+owner+"..So copying all Final" 
+                    +"AMI array to be copied "+amiArray,gpId,"S");
             }
  
              else{
-                 snapArr  =  removeDuplicateSnaps(data,snapArr);
-                 trackProcess("nosOfSnapsToBeCopied","No Of Snapshots To be copied.." +snapArr.length+
-                  "Final Snapshot Array.. "+snapArr,gpId,"S");     
+                 amiArray  =  removeDuplicateAMIs(data,amiArray);
+                 trackProcess("nosOfAmisToBeCopied","No Of AMIs To be copied for owner"+owner+" is "+amiArray.length+
+                  "Final AMI Array.. "+amiArray,gpId,"S");     
                            
             }
 
-           callback(null,snapArr,destEC2,gpId,sorce,owner);
+           callback(null,amiArray,destEC2,gpId,sorce,owner);
         }
 
     });
 }
 
 
-function removeDuplicateSnaps(data,snapArr,callback){
+function removeDuplicateAMIs(data,amiArray){
 
-    for(var snap in data.Snapshots){
-        var str=data.Snapshots[snap].Description;
-        var desSnapID=str.split("_");
-        for(var i=0;i<snapArr.length;i++){
-            if(snapArr[i]==desSnapID[1]){
-                snapArr.splice(i, 1);
+    for(var ami in data.Images){
+        var str=data.Images[ami].Description;
+        var desAMIID=str.split("_");
+        for(var i=0;i<amiArray.length;i++){
+            if(amiArray[i]==desAMIID[3]){
+                amiArray.splice(i, 1);
             }
         } 
     }
   
-    if(snapArr[0]==undefined){
+    if(amiArray[0]==undefined){
         
-        logging.logInfo("No snapshots to be copied");
+        logging.logInfo("No AMI to be copied");
         
     }
 
-  return snapArr;      
+  return amiArray;      
 }
 
 
@@ -229,33 +202,9 @@ function createAmisList(amiDescription,securityGpList){
             }
         }
     }
-
     return amiArray;
 
 }
-
-
-function createSnapshotList(snapshotDescription,AmiList){
-    var snapshotArray=new Array();
-    var l=0;
-
-    for(var snap in snapshotDescription.Snapshots){
-        var str=snapshotDescription.Snapshots[snap].Description;
-        var spl=str.split(" ");
-
-        for(var i=0;i<AmiList.length;i++){
-            if(spl[4]==AmiList[i]){
-                snapshotArray[l]=snapshotDescription.Snapshots[snap].SnapshotId;
-                l++;
-            }
-        }
-   
-    }
-
-    return snapshotArray;
-}
-
-
 
 function generateGroupId(account){
     var today = new Date();
@@ -277,17 +226,20 @@ function generateGroupId(account){
 
 function generateTimestamp(){
 
-    var today = new Date();
-    var date=today.toDateString();
-    var time=today.toTimeString();
-    today=date + "  " + time;
-    return today;
+var today=new Date();
+
+var date=today.toDateString();
+var time=today.toTimeString();
+
+return date+" "+time;
+
 
 }
 
 function trackProcess(schemaAttrib, message,gpId,status){
 
-    track.copySaveTrack(schemaAttrib, message,new Date(),gpId,status);
+    track.copySaveTrack(schemaAttrib,message,message,generateTimestamp(),gpId,status);
+    
 }
 
 exports.trackProcess=trackProcess;
