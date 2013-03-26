@@ -4,6 +4,8 @@ var express = require('express')
   , stylus = require('stylus'),
    routes = require('./routes');
 var app = express();
+var schlCopy=require('./scheduleCopy.js');
+var schlDlt=require('./scheduleDelete.js');
 
 app.configure(function(){
   app.set('views', __dirname + '/views');
@@ -33,4 +35,6 @@ app.get('/siteMonitorStatus', obj.siteMonitoringStatus);
 
 app.listen(3000);
 
+schlCopy.scheduleCopy();
+schlDlt.scheduleDelete();
 

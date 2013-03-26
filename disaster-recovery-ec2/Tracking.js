@@ -13,7 +13,7 @@ var logging=require('./logging.js');
   });
 
   var trackCopySchema = mongoose.Schema({
-     schedulerTriggerTime:Date
+    schedulerTriggerTime:Date
    , accountName        :String
   , fetchngLstOfSecGps  :String
   , nosOfSecGpsFetchd   :String
@@ -41,6 +41,7 @@ var logging=require('./logging.js');
 ,nosOfImagesToBeDltd   :String
 ,deleteImage           :String
 ,deRegisterAMI         :String
+
 });
 
  

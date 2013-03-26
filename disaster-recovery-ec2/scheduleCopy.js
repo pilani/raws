@@ -7,9 +7,11 @@ var logging=require('./logging.js');
 var rule = new schedule.RecurrenceRule();
 rule.dayOfWeek = [0, new schedule.Range(1, 7)];
 rule.hour = cfg.config["ruleCopyHour"];
-rule.minute = cfg.config["ruleCopyMinute"];;
+rule.minute = cfg.config["ruleCopyMinute"];
 
-var j = schedule.scheduleJob(rule, function(){
+exports.scheduleCopy=function scheduleCopy(){
+
+	schedule.scheduleJob(rule, function(){
 	
 	ec2DisasterRec.trackProcess("schedulerTriggerTime","Scheduler for copy Triggered at ","default","S");
 
@@ -17,3 +19,4 @@ var j = schedule.scheduleJob(rule, function(){
 
 	});
 
+}
