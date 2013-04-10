@@ -84,11 +84,18 @@ function getAMIsToDelete(data,desEc2,owner,gpId,callback){
 	var i=0;
 	var AMIArray=new Array();
 	var totCounter=0;   //for total number of snapshots to be deleted	
+	//made changes post commit
 	for(var ami in data.Images){
+		if(data.Images[ami].Description==undefined){
+			console.log("inside ")
+			ami+=1;
+		}
+		else{
+			console.log("inside else");
 		var startTime=data.Images[ami].Description.split("_");
 		var date=convertDate(startTime);
 		ec2.trackProcess("startDate","START DATE for owner "+owner+" for ImageID "+data.Images[ami].ImageId+" is "
-			+ startTime,gpId,"S");
+			+ startTime[1],gpId,"S");
 		if(dayComp > date){
 			AMIArray[i]=data.Images[ami].ImageId;
 			i++;
@@ -96,7 +103,7 @@ function getAMIsToDelete(data,desEc2,owner,gpId,callback){
 			ec2.trackProcess("deleteinitiated","delete called for owner"+owner+" for.." + data.Images[ami].ImageId ,gpId,"S");
 			
 		}
-		
+		}
 	}
 		ec2.trackProcess("nosOfImagesToBeDltd","number Of Images to be deleted  " +totCounter ,gpId,"S");
 		callback(null,AMIArray,desEc2,gpId,owner);

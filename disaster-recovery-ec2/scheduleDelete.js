@@ -11,7 +11,8 @@ rule.minute = cfg.config["ruleDeleteMinute"];
 
 exports.scheduleDelete=function scheduleDelete(){
 	schedule.scheduleJob(rule, function(){	
-	ec2DisasterRec.trackProcess("schedulerTriggerTime","Scheduler for copy Triggered at ","default","S");
+		//made changes post commit
+	ec2DisasterRec.trackProcess("schedulerTriggerTime","Scheduler for Delete Triggered at ","default","S");
     ec2Del.launchDelete();
 
   });

@@ -9,7 +9,7 @@ var logging=require('./logging.js');
 function launchCopyAMIs(){
 
     logging.logInfo("launchCopyAMIs Called");
-    var kvmap = cfg.config["ACCOUNT_KEY_COMBINATIONS"]  
+    var kvmap = cfg.config["ACCOUNT_KEY_COMBINATIONS"];  
     //Trigerring copy for all accounts read from config
     async.forEachSeries(Object.keys(kvmap),iterator,function(err,callback){
         var gpId=generateGroupId(Object.keys(kvmap));
@@ -150,9 +150,17 @@ function sortRedundantAMIs(amiArray,srcEC2,destEC2,gpId,sorce,owner,callback){
 
 
 function removeDuplicateAMIs(data,amiArray){
+    console.log("inside remove duplicates");
+
 
     for(var ami in data.Images){
+        if(data.Images[ami].Description ==undefined){
+            console.log("inside ")
+            ami+=1;
+        }
+        else{
         var str=data.Images[ami].Description;
+        console.log(str);
         var desAMIID=str.split("_");
         for(var i=0;i<amiArray.length;i++){
             if(amiArray[i]==desAMIID[3]){
@@ -160,7 +168,7 @@ function removeDuplicateAMIs(data,amiArray){
             }
         } 
     }
-  
+  }
     if(amiArray[0]==undefined){
         
         logging.logInfo("No AMI to be copied");

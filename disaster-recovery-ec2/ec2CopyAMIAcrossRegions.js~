@@ -11,8 +11,6 @@ var ec2=require('./ec2DisasterRecovery.js');
 function copyAMI(amiId,destEC2,gpId,sorce,owner,callback){
 
 	var date=createDateForDescription();
-	console.log("ami to be copied   " + amiId+"  source  "+sorce + " owner  "+owner);
-
 
 	var obj={SourceRegion:sorce,SourceImageId:amiId,Name:amiId+"_Copy",Description:"Created under disaster recovery on_"+ createDateForDescription()+"_for AMIID_"+amiId};
 
@@ -27,11 +25,8 @@ function copyAMI(amiId,destEC2,gpId,sorce,owner,callback){
 		else{
 			var copiedImageId=data.ImageId;
           	ec2.trackProcess("AMICopySuccess","AMI copy for owner "+owner+"  initiated successfully for ImageId.."+amiId,gpId,"S");
+			describeAMIs(copiedImageId,destEC2,10*000,gpId,callback);
 			
-			setTimeout(function(){
-        		describeAMIs(copiedImageId,destEC2,10*000,gpId,callback);
-       				 }, 5*60*1000);
-		
 		}		
 	
 	});
@@ -39,7 +34,7 @@ function copyAMI(amiId,destEC2,gpId,sorce,owner,callback){
 }    
 
 function launcher(amiArray,callback){
-	async.forEachLimit(amiArray,5,iterator,function (err) { 
+	async.forEach(amiArray,iterator,function (err) { 
 
 		if(err){
 			ec2.trackProcess("copyCmplt","Error in calling copy for" +amiArray.amiId ,amiArray.gpId,"F");
@@ -71,7 +66,6 @@ function describeAMIs(copiedImageId,destEC2,interval,gpId,callback){
 		}
 
 		else{
-			
 			logging.logInfo("The progress of copying "+copiedImageId + " is" + data.Images[0].State + " Timestamp : "+new Date());
 			var state=data.Images[0].State;
 			checkProgress(state,copiedImageId,destEC2,interval,gpId,callback);
@@ -82,8 +76,8 @@ function describeAMIs(copiedImageId,destEC2,interval,gpId,callback){
 
 
 function checkProgress(state,copiedImageId,destEC2,interval,gpId,callback){
-	//made changes post commit
-	if(state=="pending"){
+
+	if(state!="pending"){
 		setTimeout(function(){
         describeAMIs(copiedImageId,destEC2,interval,gpId,callback);
         }, interval);
