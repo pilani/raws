@@ -19,17 +19,21 @@ function copyAMI(amiId,destEC2,gpId,sorce,owner,callback){
 	destEC2.client.copyImage(obj,function(err,data){
 
 		if(err){
+			 logging.logError("Request:"+ JSON.stringify(this.request.httpRequest)+" Timestamp : "+new Date());
+
 			ec2.trackProcess("AMICopyFailure","AMI Copy for owner"+owner+" failed because"  + err  + "For" 
 				+ amiId,gpId,"F");
 			callback(err);
 		}
 
 		else{
+			 logging.logInfo("Request:"+ JSON.stringify(this.request.httpRequest)+" Timestamp : "+new Date());
+
 			var copiedImageId=data.ImageId;
           	ec2.trackProcess("AMICopySuccess","AMI copy for owner "+owner+"  initiated successfully for ImageId.."+amiId,gpId,"S");
 			
 			setTimeout(function(){
-        		describeAMIs(copiedImageId,destEC2,10*000,gpId,callback);
+        		describeAMIs(copiedImageId,destEC2,1*60*1000,gpId,callback);
        				 }, 5*60*1000);
 		
 		}		
@@ -66,11 +70,13 @@ function describeAMIs(copiedImageId,destEC2,interval,gpId,callback){
 	var obj={ImageIds:[copiedImageId]};
 	destEC2.client.describeImages(obj,function(error,data){
 		if(error){
+			 logging.logError("Request:"+ JSON.stringify(this.request.httpRequest)+" Timestamp : "+new Date());
+
 			ec2.trackProcess("copyAmi","Error in describeImages for groupID " +gpId+" for AMI_ID : " +copiedImageId+" MESSAGE "+ error,gpId,"F");
 			callback(error);
 		}
 
-		else{
+		else{	 logging.logInfo("Request:"+ JSON.stringify(this.request.httpRequest)+" Timestamp : "+new Date());
 			
 			logging.logInfo("The progress of copying "+copiedImageId + " is" + data.Images[0].State + " Timestamp : "+new Date());
 			var state=data.Images[0].State;
