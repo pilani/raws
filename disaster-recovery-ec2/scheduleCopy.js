@@ -6,14 +6,17 @@ var logging=require('./logging.js');
 
 var rule = new schedule.RecurrenceRule();
 rule.dayOfWeek = [0, new schedule.Range(1, 7)];
-rule.hour = 15;
-rule.minute = 23;
+rule.hour = cfg.config["ruleCopyHour"];
+rule.minute = cfg.config["ruleCopyMinute"];
 
-var j = schedule.scheduleJob(rule, function(){
+exports.scheduleCopy=function scheduleCopy(){
+
+	schedule.scheduleJob(rule, function(){
 	
-	track.copySaveTrack("schedulerTriggerTime",new Date(),"Scheduler for copy Triggered at ");
+	ec2DisasterRec.trackProcess("schedulerTriggerTime","Scheduler for copy Triggered at ","default","S");
 
-	ec2DisasterRec.launchCopySnapShots();
+	ec2DisasterRec.launchCopyAMIs();
 
 	});
 
+}
