@@ -1,5 +1,6 @@
 // Constructor
-var accountdetailsvo = function(name, usagecharges,avgcpu,avgmemorey,avgnetwork) {
+var accountdetailsvo = function(id,name, usagecharges,avgcpu,avgmemorey,avgnetwork) {
+  this.id =id;
   this.name = name;
   this.usagecharges = usagecharges;
   this.avgcpu = avgcpu;
