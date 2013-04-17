@@ -86,8 +86,18 @@ function getAMIsToDelete(data,desEc2,owner,gpId,callback){
 	var totCounter=0;   //for total number of snapshots to be deleted	
 	//made changes post commit
 	for(var ami in data.Images){
-		if(data.Images[ami].Description==undefined){
+		var des=data.Images[ami].Description;
+		var desSplit=des.split("_");
+		if(des==undefined){
 			console.log("inside ")
+			ami+=1;
+		}
+		else if(desSplit.length!=3){
+			console.log("inside elseIf ");
+			ami+=1;			
+		}
+		else if(desSplit[0]!="Created under disaster recovery on_"){
+			console.log("inside second elseIf");
 			ami+=1;
 		}
 		else{
