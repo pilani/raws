@@ -2,10 +2,12 @@ var cfg =require('./config.js');
 var AWS = require('aws-sdk');
 var fs = require('fs');
 var wrench=require('wrench');
+var exec = require('child_process').exec,
+    child;
 
 var async=require('async');
 var walk    = require('walk');
-
+var s3Meta=require('./S3MetadataToMongo.js');
 
 var kvmap = cfg.config["KEY_REGION_S3_GLACIER"];
 
@@ -17,6 +19,24 @@ AWS.config.update({region: 'ap-southeast-1'});
 
 var s3=new AWS.S3();
 //getBuckets();
+
+getObjectsForEachBucket("tests3toglacier");
+
+function getObjectsForEachBucket(bucketName){
+  
+  var cmd="s3cmd sync  --recursive s3://"+bucketName+" bucket_data/deepika:";
+  child = exec(cmd,function (error, stdout, stderr) {
+
+      if (error) {
+            console.log('exec error: ' + error);
+      }
+      else{
+        console.log("Run successful"+stdout+"      "+stderr);
+      
+      }
+  });
+}
+
 
 function getBuckets(){
   //var obj={Bucket:"317993448580-ap-northeast-1"};
@@ -308,7 +328,7 @@ walker.on('end', function() {
 });
 }
 
-readUsingFindit();
+//readUsingFindit();
 
 
 function readUsingFindit(){
@@ -327,4 +347,32 @@ finder.on('file', function (file, stat) {
 finder.on('link', function (link, stat) {
     console.log("LINKS"+link);
 });
+}
+
+//loadMongoToMap();
+function loadMongoToMap(){
+  var map=new Object();
+
+s3Meta.trackS3Metadata.find(function(err,result){
+if(err){
+
+  console.log("error"+err);
+}else{
+  console.log("result" +result);
+  for(var i in result){
+    map[result[i].ObjectName]=result[i].CreationDate;
+console.log("MAP" + map[".home.deepikajain.node-v0.8.17.S3.bucket_data.tests3toglacier.test.utilities.txt"]);
+  }
+if(map[".home.deepikajain.node-v0.8.17.S3.bucta.tests3toglacier.test.utilities.txt"]!=undefined){
+  console.log("YIPPPPIEa");
+}else{
+
+  console.log("NOT FOUND");
+}
+
+}
+
+});
+
+
 }

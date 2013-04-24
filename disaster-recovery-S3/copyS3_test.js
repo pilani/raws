@@ -8,6 +8,7 @@ var cfg=require('./config.js');
 var s3Client=require('./S3Client.js');
 var s3Meta=require('./S3MetadataToMongo.js');
 var map=new Object();
+var objMap=new Object();
 //var http = require('http').createServer().listen(8080);
 
 launchCopyS3();
@@ -31,7 +32,8 @@ function launchCopyS3(){
 function iterator(credentials, callback){   
 
     async.waterfall([function dummy(callback){callback(null, credentials);} ,s3Client.getSrcS3Client,
-      s3Client.getDestGlacierClient,loadMongoToMap,getBuckets,createBucketArray,bucketParams,filterBuckets,getObjectsAndUpload],
+      s3Client.getDestGlacierClient,loadMongoToMap,getBuckets,createBucketArray,
+      bucketParams,filterBuckets,getObjectsAndUpload],
         function(err,result ){
         if(err){
            // trackProcess("finalWaterfallCall","error in calling async.waterfall for account "+credentials+ " MESSAGE : "+err,gpId,"F");
@@ -134,22 +136,6 @@ function filterBucketsIterator(bucket,callback){
       }
   });
 }
-function getObjectVersioning(result,callback){
-
-  var obj={Bucket:result.bucketName};
-
-  result.s3.client.listObjectVersions(obj,function(err,data){
-  if(err){
-    console.log("Errpr"+err);
-  }else{
-
-    console.log("DATA" + data);
-  }
-
-    callback()
-   });
-
-}
 
 
 function getObjectsAndUpload(bucketDataArray,callback){
@@ -171,8 +157,9 @@ function getObjectsAndUpload(bucketDataArray,callback){
 function readBucketData(bucketDataArray,callback){
 
 async.waterfall([function dummy(callback){callback(null, bucketDataArray.bucketName,
-  bucketDataArray.desGlacier);},
-  makeDirectoryForEachBucket,getObjectsForEachBucket,getPathOfFilesInEachBucket,createUploadParams,checkForObjectPresence,
+  bucketDataArray.desGlacier,bucketDataArray.s3,keymarker,objectDataArray);},getObjectVersioning,createMapForObjectVersions,
+  makeDirectoryForEachBucket,getObjectsForEachBucket,getPathOfFilesInEachBucket,
+  fetchFileNamesFromCompletePath,createUploadParams,checkForObjectPresence,
   readAndUpload],function(err,result){
     if(err){
       callback(err);
@@ -183,10 +170,55 @@ async.waterfall([function dummy(callback){callback(null, bucketDataArray.bucketN
   });
 }
 
- 
-function makeDirectoryForEachBucket(bucketName,desGlacier,callback){
 
-  var cmd="mkdir -p /home/deepikajain/node-v0.8.17/S3/bucket_data/"+bucketName;
+var keymarker="";
+var objectDataArray=new Array();
+
+
+function getObjectVersioning(bucket,desGlacier,s3,keyMarker,objectDataArray,callback){
+
+  var obj={Bucket:bucket,Delimiter:'/*',KeyMarker:keymarker};
+
+  s3.client.listObjectVersions(obj,function(err,data){
+  if(err){
+    console.log("Error"+err);
+  }else{
+
+    console.log("DATA" + JSON.stringify(data));
+    objectDataArray.push(data);
+    if(data.IsTruncated==true){
+  console.log("inside if");
+  console.log("Next marker"+data.NextKeyMarker);
+
+  getObjectVersioning(bucket,desGlacier,s3,data.NextKeyMarker,objectDataArray,callback);
+}
+  }
+
+    callback(null,bucket,desGlacier,objectDataArray)
+   });
+
+}
+
+
+function createMapForObjectVersions(bucket,desGlacier,data,callback){
+
+for(var obj in data.Versions){
+var keysplit=data.Versions[obj].Key.split("/");
+var len=keysplit.length;
+if(keysplit[1]==undefined){
+   objMap[data.Versions[obj].Key]=data.Versions[obj].LastModified;
+}
+
+else{
+objMap[keysplit[len-1]]=data.Versions[obj].LastModified;
+
+}}
+callback(null,bucket,desGlacier,objMap);
+}
+ 
+function makeDirectoryForEachBucket(bucketName,desGlacier,data,callback){
+
+  var cmd="mkdir -p "+cfg.config["BASE_PATH"]+bucketName;
   child = exec(cmd,function (error, stdout, stderr) {
       if (error) {
             console.log('exec error: ' + error);
@@ -218,7 +250,7 @@ function getPathOfFilesInEachBucket(desGlacier,bucketName,callback){
 
   var walk    = require('walk');
   var files   = [];
-  var walker  = walk.walk('/home/deepikajain/node-v0.8.17/S3/bucket_data/'+bucketName, { followLinks: false });
+  var walker  = walk.walk(cfg.config["BASE_PATH"]+bucketName, { followLinks: false });
   walker.on('file', function(root, stat, next) {
     files.push(root + '/' + stat.name);
     next();
@@ -230,7 +262,16 @@ function getPathOfFilesInEachBucket(desGlacier,bucketName,callback){
   });
  
 }
-
+function fetchFileNamesFromCompletePath(files,desGlacier,callback){
+  var fileArray=new Array();
+  for(var i in files){
+  var n=files[i].split('/');
+  var len=n.length;
+  fileArray[i]=n[len-1];
+}
+console.log("FILE ARRAY" + fileArray);
+callback(null,files,desGlacier)
+}
 
 
 function createUploadParams(pathArray,desGlacier,callback){
@@ -238,7 +279,10 @@ function createUploadParams(pathArray,desGlacier,callback){
   var uploadArray=new Array();
   for(var path in pathArray){
     var archiveDes=pathArray[path].replace(/\//gi,".");
-      var pathKey=new uploadParams(pathArray[path],desGlacier,archiveDes);
+    var len=pathArray[path].split('/').length;
+    var fileName=pathArray[path].split('/')[len-1];
+    console.log("filename"+fileName);
+      var pathKey=new uploadParams(pathArray[path],desGlacier,archiveDes,fileName);
       uploadArray[path]=pathKey;
   }
 
@@ -247,11 +291,12 @@ function createUploadParams(pathArray,desGlacier,callback){
 
 
 
-function uploadParams(path,desGlacier,archiveDes){
+function uploadParams(path,desGlacier,archiveDes,fileName){
 
   this.path=path;
   this.desGlacier=desGlacier;
   this.archiveDes=archiveDes;
+  this.fileName=fileName;
 
 }
 
@@ -281,10 +326,10 @@ function filterObjectsIterator(uploadArray,callback){
             callback(true);
 
           }   
-          else if(map[uploadArray.archiveDes] <new Date()){
-
+          else if(map[uploadArray.archiveDes] < objMap[uploadArray.fileName]){
+            console.log("map[uploadArray.archiveDes"+map[uploadArray.archiveDes]+"objMap[uploadArray.fileName] "+objMap[uploadArray.fileName]);
             console.log("INSIDE ELSE IF");
-            callback(false);
+            callback(true);
           }
           else{
 
@@ -309,9 +354,8 @@ function readAndUpload(fromPathArray,callback){
 }
 
 function uploadBucketData(fromPathArray,callback) {
-	async.waterfall([function dummy(callback){callback(null, fromPathArray.path,fromPathArray.desGlacier);}
-    ,readFilesFromDirectory,createKey,createArchiveDesForGlacier,createMetadata,createMetadataFile,
-    logMetadata,uploadToS3],
+	async.waterfall([function dummy(callback){callback(null, fromPathArray.path,fromPathArray.desGlacier,fromPathArray.fileName);}
+    ,readFilesFromDirectory,createArchiveDesForGlacier,uploadToS3,logMetadata],
     function(err,result){
 		  if(err){
  			  callback(err);
@@ -323,7 +367,7 @@ function uploadBucketData(fromPathArray,callback) {
  	
 }
 
-function readFilesFromDirectory(path,desGlacier,callback){
+function readFilesFromDirectory(path,desGlacier,fileName,callback){
  
   fs.readFile(path, function (err, data) {
     if (err){
@@ -333,37 +377,29 @@ function readFilesFromDirectory(path,desGlacier,callback){
       //console.log("DATA" + data );
       var buffer = new Buffer(data,"utf-8");
       console.log("array before passing" + path);
-      callback(null,path,buffer,desGlacier);
+      callback(null,buffer,path,desGlacier,fileName);
     }
   });
 }
 
-function createKey(path,buffer,desGlacier,callback){
-  var keyArray=path.split("/");
-  var len=keyArray.length;
-  var key=keyArray[len-1];
-  //  console.log("KEYYY" + key);
-  callback(null,key,buffer,path,desGlacier);
-}
 
-
-function createArchiveDesForGlacier(key,buffer,path,desGlacier,callback){
+function createArchiveDesForGlacier(buffer,path,desGlacier,fileName,callback){
 
   var archiveDes=path.replace(/\//gi,".");
-  callback(null,key,buffer,path,desGlacier,archiveDes);
+  callback(null,buffer,desGlacier,archiveDes,fileName);
 
 }
 
 
-function createMetadata(key,buffer,path,desGlacier,archiveDes,callback){
+/*function createMetadata(buffer,path,desGlacier,archiveDes,fileName,callback){
 
   var metadata="ARCHIVE NAME : "+archiveDes+"PATH :" +path+"CREATION TIMESTAMP :"+new Date();
-  callback(null,key,buffer,path,desGlacier,archiveDes,metadata);
+  callback(null,buffer,path,desGlacier,archiveDes,metadata,fileName);
 
 }
 
 
-function createMetadataFile(key,buffer,path,desGlacier,archiveDes,metadata,callback){
+function createMetadataFile(buffer,path,desGlacier,archiveDes,metadata,fileName,callback){
 
   var cmd="touch /home/deepikajain/node-v0.8.17/S3/bucket_data/"+key+".txt";
   //console.log("CMDDDDD" + cmd);
@@ -378,19 +414,20 @@ function createMetadataFile(key,buffer,path,desGlacier,archiveDes,metadata,callb
             console.log(err);
           }    
         });
-        callback(null,key,buffer,desGlacier,archiveDes);
+        callback(null,buffer,desGlacier,archiveDes,fileName);
       }
   });
 }
 
 
-function logMetadata(key,buffer,desGlacier,archiveDes,callback){
+function logMetadata(buffer,desGlacier,archiveDes,fileName,callback){
 
-s3Meta.saveS3MetadataToMongo(archiveDes,new Date());
-callback(null,key,buffer,desGlacier,archiveDes);
+s3Meta.saveS3MetadataToMongo(archiveDes,objMap[fileName]);
+callback(null,buffer,desGlacier,archiveDes);
 
-}
- function uploadToS3(key,buffer,desGlacier,archiveDes,callback){
+}*/
+
+ function uploadToS3(buffer,desGlacier,archiveDes,fileName,callback){
  	//console.log("upload to S3 with key" + archiveDes);
   var obj={Bucket:"rawss3test",Key:archiveDes,Body:buffer}
   desGlacier.client.putObject(obj,function(error,data){
@@ -399,16 +436,23 @@ callback(null,key,buffer,desGlacier,archiveDes);
 	  } 
 	   else{
     //console.log("DATA Returned"+JSON.stringify(data));
-      fs.appendFile("/home/deepikajain/node-v0.8.17/S3/bucket_data/"+key+".txt",JSON.stringify(data),function(err){
+      /*fs.appendFile("/home/deepikajain/node-v0.8.17/S3/bucket_data/"+key+".txt",JSON.stringify(data),function(err){
         if(err){
             console.log("ERROR in Appending copy data to glacier"+err)
         }else{
             console.log("data Appended successfully");
         }
-      });
+      });*/
     }
-    callback(null);
+    callback(null,archiveDes,fileName);
     });
+}
+
+function logMetadata(archiveDes,fileName,callback){
+
+s3Meta.saveS3MetadataToMongo(archiveDes,objMap[fileName]);
+callback(null);
+
 }
 
 function uploadToGlacier(key,buffer,desGlacier,archiveDes,callback){

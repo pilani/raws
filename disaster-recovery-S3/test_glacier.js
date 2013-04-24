@@ -61,7 +61,7 @@ fs.writeFile('/home/deepikajain/Desktop/testbucket/copy',data, function(err){
             	console.log("write succesful");
             }
             });
-*/
+
   var buffer = new Buffer("deepika","utf-8");
   uploadToGlacier(buffer);
  //console.log("BUFFER" + buffer);
@@ -85,7 +85,7 @@ console.log(" error is :"+error);
 console.log(JSON.stringify(data));
 
 }});
-}
+}*/
 //getting vault description
 
 /*
@@ -104,7 +104,7 @@ console.log(JSON.stringify(data));
 //Inventory retrieval
 
 
-/*var obj2={vaultName:"tests3toglacier",accountId:'317993448580',jobParameters:{Type:"inventory-retrieval"
+var obj2={vaultName:"tests3toglacier",accountId:'317993448580',jobParameters:{Type:"inventory-retrieval"
 ,SNSTopic:"arn:aws:sns:us-east-1:317993448580:inventory_Retrieval"
 }};
 glacier.client.initiateJob(obj2,function(error,data){
@@ -116,13 +116,14 @@ console.log(" error is :"+error);
 console.log(JSON.stringify(data));
 
 }});
-*/
+
 
 //archive retrieval
-/*var obj2={vaultName:"tests3toglacier",accountId:'317993448580',jobParameters:{Type:"archive-retrieval"
-,SNSTopic:"arn:aws:sns:us-east-1:317993448580:inventory_Retrieval"
+var obj1={vaultName:"tests3toglacier",accountId:'317993448580',jobParameters:{Type:"archive-retrieval"
+,SNSTopic:"arn:aws:sns:us-east-1:317993448580:inventory_Retrieval",
+ArchiveId:"2iy7fuJaEductcHDQAsThNKb-yUH2P0UiNgzYMKYbrzQtkxOLLHTltfFPUi22iXlpyjfuMbvdaI4uLsmDn8DjYrNB-p-Az1Cll3ELCdEJBX0fwnWoplpZQJXT03Y9WJzl3Ltzzmu8g"
 }};
-glacier.client.initiateJob(obj2,function(error,data){
+glacier.client.initiateJob(obj1,function(error,data){
 
   if(error){
 console.log(" error is :"+error);
@@ -130,7 +131,7 @@ console.log(" error is :"+error);
   }else{
 console.log(JSON.stringify(data));
 
-}});*/
+}});
 
 /*
 var obj={accountId:'317993448580',vaultName:"tests3toglacier",jobId:"mvUfaecKXr-LI_jexN-Tg71voCBSviIjlpf9DzVsikvGx2XuNaRuFFyjd3PFRJlaM6xYVKeMNhEZnCZpmlqxBj6_myIp"};
