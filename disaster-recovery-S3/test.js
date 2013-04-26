@@ -20,7 +20,14 @@ AWS.config.update({region: 'ap-southeast-1'});
 var s3=new AWS.S3();
 //getBuckets();
 
-getObjectsForEachBucket("tests3toglacier");
+var arr=new Array();
+arr=["1"];
+arr1=["2"];
+var c="9";
+var arr=arr.concat(arr1);
+console.log(".."+arr.length+"..."+arr);
+
+//getObjectsForEachBucket("tests3toglacier");
 
 function getObjectsForEachBucket(bucketName){
   

@@ -41,7 +41,7 @@ s3.client.getObject(obj,function(error,data){
 	}
 	});
 
-*/
+
 fs.readFile('/home/deepikajain/Desktop/testbucket/10_144688_front', function (err, data) {
   if (err){
 console.log("error" + err);
@@ -72,7 +72,7 @@ console.log("DATA Returned"+data);
 
 
 	}
-/*
+
 var date=new Date();
 var today=new Date();
 
@@ -105,14 +105,17 @@ getObjects(keymarker,bucketArray[j]);
 }
 });
 
-//getObjects("","rawss3test")
+
 
 var totalObjects=0;
 var counter=0;
-
+*/
+getObjects("","lis-bpimages")
+var objectArray=new Array();
+var objectArray1=new Array();
 function getObjects(keymarker,bucketname){
 
-var obj1={Bucket:bucketname,Delimiter:'/*'
+var obj1={Bucket:bucketname,Delimiter:'/*',MaxKeys:1
 ,KeyMarker:keymarker};
 console.log("bucketname" + bucketname);
 
@@ -120,8 +123,10 @@ s3.client.listObjectVersions(obj1,function(error,data){
 	if(error){
 		console.log("error.."+error);}
 		else{
+			//objectArray.push(data.Versions);
+		objectArray1=	objectArray1.concat(data.Versions);
 //console.log("Object  data"+JSON.stringify(data));
-
+/*
 for(var k in data.Versions){
 
 	//console.log("last modified" + data.Versions[k].LastModified+"for   " + data.Versions[k].Key);
@@ -140,18 +145,21 @@ console.log("LAST MODIFIED......."+lastModified+"for" + data.Versions[k].Key);
 //console.log("is Truncated"+data.IsTruncated);
 //console.log("data length"+data.Versions.length);
 totalObjects+=data.Versions.length;
+*/
 if(data.IsTruncated==true){
+	//var objectArray=new Array();
+	//objectArray.push(data);
 	//console.log("inside if");
 	//console.log("Next marker"+data.NextKeyMarker);
-
+	//objectArray1=	objectArray.concat(data);
 	getObjects(data.NextKeyMarker,bucketname);
 }
 }
+console.log("OBJECTARRAY!!!!!!!!!!!"+JSON.stringify(objectArray1));
 }); 
 
-console.log("total objects modified last month" + counter);
+//console.log("total objects modified last month" + counter);
 
 //console.log("total objects"+totalObjects);
 
 }
-*/

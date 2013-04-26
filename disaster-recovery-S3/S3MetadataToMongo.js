@@ -23,10 +23,10 @@ var mongoose = require('mongoose');
 
 exports.saveS3MetadataToMongo=function saveS3MetadataToMongo(ObjectName,creationDate){
 
-var track = new trackS3Metadata({});
-track.setValue("ObjectName",ObjectName);
-track.setValue("CreationDate",creationDate);
-track.save(function(err,result){
+var trackMetadata = new trackS3Metadata({});
+trackMetadata.setValue("ObjectName",ObjectName);
+trackMetadata.setValue("CreationDate",creationDate);
+trackMetadata.save(function(err,result){
 
          saveTracker(err,result);
 

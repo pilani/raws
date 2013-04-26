@@ -1,0 +1,73 @@
+{"level":"info","message":"Loading metadata details from mongo to map","timestamp":"2013-04-25T15:25:18.505Z"}
+{"level":"info","message":"connection successfull","timestamp":"2013-04-25T15:25:18.512Z"}
+{"level":"info","message":"mapLoaded","timestamp":"2013-04-25T15:25:18.522Z"}
+{"level":"info","message":"Getting the list of buckets from S3","timestamp":"2013-04-25T15:25:18.523Z"}
+{"level":"info","message":"Getting the list of buckets from S3 succeeded ","timestamp":"2013-04-25T15:25:20.226Z"}
+{"level":"info","message":"Creating bucket array","timestamp":"2013-04-25T15:25:20.227Z"}
+{"level":"info","message":"Filtering buckets only present in Singapore Region","timestamp":"2013-04-25T15:25:20.228Z"}
+{"level":"info","message":"Filtering buckets only present in Singapore Region","timestamp":"2013-04-25T15:25:20.270Z"}
+{"level":"info","message":"Filtering buckets only present in Singapore Region","timestamp":"2013-04-25T15:25:20.310Z"}
+{"level":"info","message":"Filtering buckets only present in Singapore Region","timestamp":"2013-04-25T15:25:20.351Z"}
+{"level":"info","message":"Filtering buckets only present in Singapore Region","timestamp":"2013-04-25T15:25:20.392Z"}
+{"level":"info","message":"Loading metadata details from mongo to map","timestamp":"2013-04-25T15:26:40.182Z"}
+{"level":"info","message":"connection successfull","timestamp":"2013-04-25T15:26:40.189Z"}
+{"level":"info","message":"mapLoaded","timestamp":"2013-04-25T15:26:40.199Z"}
+{"level":"info","message":"Getting the list of buckets from S3","timestamp":"2013-04-25T15:26:40.201Z"}
+{"level":"info","message":"Getting the list of buckets from S3 succeeded ","timestamp":"2013-04-25T15:26:41.633Z"}
+{"level":"info","message":"Creating bucket array","timestamp":"2013-04-25T15:26:41.634Z"}
+{"level":"info","message":"Filtering buckets only present in Singapore Region","timestamp":"2013-04-25T15:26:41.635Z"}
+{"level":"info","message":"Filtering buckets only present in Singapore Region","timestamp":"2013-04-25T15:26:41.677Z"}
+{"level":"info","message":"Filtering buckets only present in Singapore Region","timestamp":"2013-04-25T15:26:41.719Z"}
+{"level":"info","message":"Filtering buckets only present in Singapore Region","timestamp":"2013-04-25T15:26:41.763Z"}
+{"level":"info","message":"Filtering buckets only present in Singapore Region","timestamp":"2013-04-25T15:26:41.805Z"}
+{"level":"info","message":"Filter buckets succeded","timestamp":"2013-04-25T15:26:42.325Z"}
+{"level":"info","message":"Filter buckets succeded","timestamp":"2013-04-25T15:26:42.333Z"}
+{"level":"info","message":"Filter buckets succeded","timestamp":"2013-04-25T15:26:42.422Z"}
+{"level":"info","message":"Filter buckets succeded","timestamp":"2013-04-25T15:26:43.056Z"}
+{"level":"info","message":"Filter buckets succeded","timestamp":"2013-04-25T15:26:43.061Z"}
+{"level":"info","message":"Getting Object Versioning ","timestamp":"2013-04-25T15:26:43.064Z"}
+{"level":"info","message":"Getting Object Versioning succeded","timestamp":"2013-04-25T15:26:43.771Z"}
+{"level":"info","message":"Creating map for object Versioning data","timestamp":"2013-04-25T15:26:43.774Z"}
+{"level":"info","message":"Making directory for each bucket","timestamp":"2013-04-25T15:26:43.775Z"}
+{"level":"info","message":"Getting Objects for Bucket apacrdatakeyvaluemapsfailure","timestamp":"2013-04-25T15:26:43.789Z"}
+{"level":"info","message":"Getting Objects for Bucket apacrdatakeyvaluemapsfailure Succeeded","timestamp":"2013-04-25T15:26:44.091Z"}
+{"level":"info","message":"Getting path of files in bucket apacrdatakeyvaluemapsfailure","timestamp":"2013-04-25T15:26:44.105Z"}
+{"level":"info","message":"Filtering Objects If already present in the destination","timestamp":"2013-04-25T15:26:44.114Z"}
+{"level":"info","message":"Final Result after Filtering Objects ","timestamp":"2013-04-25T15:26:44.114Z"}
+{"level":"info","message":"readAndUpload Success","timestamp":"2013-04-25T15:26:44.117Z"}
+{"level":"info","message":"readBucketDataIterator Success","timestamp":"2013-04-25T15:26:44.117Z"}
+{"level":"info","message":"Getting Object Versioning ","timestamp":"2013-04-25T15:26:44.118Z"}
+{"level":"info","message":"Getting Object Versioning succeded","timestamp":"2013-04-25T15:26:45.522Z"}
+{"level":"info","message":"Creating map for object Versioning data","timestamp":"2013-04-25T15:26:45.525Z"}
+{"level":"info","message":"Making directory for each bucket","timestamp":"2013-04-25T15:26:45.528Z"}
+{"level":"info","message":"Getting Objects for Bucket cloudwatchscript","timestamp":"2013-04-25T15:26:45.534Z"}
+{"level":"info","message":"Getting Objects for Bucket cloudwatchscript Succeeded","timestamp":"2013-04-25T15:26:46.758Z"}
+{"level":"info","message":"Getting path of files in bucket cloudwatchscript","timestamp":"2013-04-25T15:26:46.760Z"}
+{"level":"info","message":"Filtering Objects If already present in the destination","timestamp":"2013-04-25T15:26:46.767Z"}
+{"level":"info","message":"Object aws-scripts-mon.tar.gz is already present in destination..So not adding","timestamp":"2013-04-25T15:26:46.768Z"}
+{"level":"info","message":"Final Result after Filtering Objects ","timestamp":"2013-04-25T15:26:46.768Z"}
+{"level":"info","message":"readAndUpload Success","timestamp":"2013-04-25T15:26:46.771Z"}
+{"level":"info","message":"readBucketDataIterator Success","timestamp":"2013-04-25T15:26:46.771Z"}
+{"level":"info","message":"Getting Object Versioning ","timestamp":"2013-04-25T15:26:46.773Z"}
+{"level":"info","message":"Getting Object Versioning succeded","timestamp":"2013-04-25T15:26:47.982Z"}
+{"level":"info","message":"Creating map for object Versioning data","timestamp":"2013-04-25T15:26:47.983Z"}
+{"level":"info","message":"Making directory for each bucket","timestamp":"2013-04-25T15:26:47.985Z"}
+{"level":"info","message":"Getting Objects for Bucket tests3toglacier","timestamp":"2013-04-25T15:26:48.000Z"}
+{"level":"info","message":"Getting Objects for Bucket tests3toglacier Succeeded","timestamp":"2013-04-25T15:26:49.108Z"}
+{"level":"info","message":"Getting path of files in bucket tests3toglacier","timestamp":"2013-04-25T15:26:49.112Z"}
+{"level":"info","message":"Filtering Objects If already present in the destination","timestamp":"2013-04-25T15:26:49.120Z"}
+{"level":"info","message":"Object ss.txt is already present in destination..So not adding","timestamp":"2013-04-25T15:26:49.121Z"}
+{"level":"info","message":"Object cost_cal_s3.txt is already present in destination..So not adding","timestamp":"2013-04-25T15:26:49.121Z"}
+{"level":"info","message":"Object memCached.txt is already present in destination..So not adding","timestamp":"2013-04-25T15:26:49.121Z"}
+{"level":"info","message":"Object monday_work is already present in destination..So not adding","timestamp":"2013-04-25T15:26:49.122Z"}
+{"level":"info","message":"Object Basics.txt.tar.gz is already present in destination..So not adding","timestamp":"2013-04-25T15:26:49.122Z"}
+{"level":"info","message":"Object img3.png is already present in destination..So not adding","timestamp":"2013-04-25T15:26:49.122Z"}
+{"level":"info","message":"Object img.png is already present in destination..So not adding","timestamp":"2013-04-25T15:26:49.122Z"}
+{"level":"info","message":"Object img3.png is already present in destination..So not adding","timestamp":"2013-04-25T15:26:49.126Z"}
+{"level":"info","message":"Object utilities.txt is already present in destination..So not adding","timestamp":"2013-04-25T15:26:49.126Z"}
+{"level":"info","message":"Final Result after Filtering Objects ","timestamp":"2013-04-25T15:26:49.126Z"}
+{"level":"info","message":"readAndUpload Success","timestamp":"2013-04-25T15:26:49.130Z"}
+{"level":"info","message":"readBucketDataIterator Success","timestamp":"2013-04-25T15:26:49.131Z"}
+{"level":"info","message":" getObjectsAndUpload Success","timestamp":"2013-04-25T15:26:49.131Z"}
+{"level":"info","message":"final Iterator callback","timestamp":"2013-04-25T15:26:49.131Z"}
+{"level":"info","message":"final callback called","timestamp":"2013-04-25T15:26:49.132Z"}
