@@ -1,0 +1,20 @@
+STEPS FOR S3 DISASTER RECOVERY:::::::
+
+1.Read  account details from config.
+2.for each account create the source and destination client.
+3.load the data(archive description[key] and last modified timestamp[value]) present in mongo to a hashmap
+4.for each account get the list of buckets present in all regions.
+5.filter the buckets and get only those present in singapore region.
+6.for each bucket get the objects details(versioning like lastmodified,key etc) and create one array for that.
+7.make a directory for the bucket with the bucket name in the path provided in config.
+8.download all the objects present in s3 for that particular bucket and save them in the directory created for that bucket.
+9.create an aaray for the complete path of object files present the bucket folder.
+10.check for each object whether it is alreday present in glacier or not.compare with the data present in hshmap created form mongo.
+11.If the object is alreday present filter it out.and pass on the remaining objects which are to be upload on to the next level.
+12.forEach object file present in bucket folder read its content and convert it into a buffer which can be uploaded to glacier.
+13.calculate the checksum according to the format provided by amazon.
+14.upload the buffer along with the parameters like archive Description,checksum,vaultname,accountId etc. to glacier.
+15.finally log the metadata like archive Des,archive ID returned by glacier after the upload and last modified time for each object into the mongo.
+16.After one iteration is complete for a bucket which includes uploading of all objects to glacier and logging to mongo, call delete on  bucket folder from the path.
+17.move on to the next bucket.
+
