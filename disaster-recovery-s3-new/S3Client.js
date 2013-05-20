@@ -18,7 +18,7 @@ exports.getDestGlacierClient = function getDestGlacierClient(account,srcS3,callb
 	
   	var keys = getAWSKeysByAccountName(account);
 
-  	var desGlacier=createS3Client(keys.accKey,keys.secKey);
+  	var desGlacier=createGlacierClient(keys.accKey,keys.secKey,keys.dest);
   	
   	callback(null,srcS3,desGlacier,account);
 }

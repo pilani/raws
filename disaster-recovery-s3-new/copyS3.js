@@ -9,7 +9,7 @@ var s3Client=require('./S3Client.js');
 var track=require('./Tracking.js');
 var map=new Object();
 var objMap=new Object();
-var chksum=require('./testCheckSum.js');
+var chksum=require('./calculateCheckSum.js');
 //var http = require('http').createServer().listen(8080);
 
 
@@ -92,7 +92,7 @@ function createBucketArray(bucketData,desGlacier,s3,gpId,callback){
   bucketArray[1]="317993448580-ap-northeast-1";
   bucketArray[2]="boss-ami";
   bucketArray[3]="cloudwatchscript";
-  bucketArray[4]="tests3toglacier";
+//  bucketArray[4]="tests3toglacier";
   callback(null,bucketArray,desGlacier,s3,gpId);
 }
 
@@ -178,7 +178,6 @@ async.waterfall([function dummy(callback){callback(null, bucketDataArray.bucketN
     }
     else{
       trackProcess("readBucketDataIteratorStatus","readBucketDataIterator Success",bucketDataArray.gpId,"S");
-      console.log("_______________________________________________________");
       deleteBucketFolder(bucketDataArray.bucketName);
       callback(null);
     }
@@ -196,7 +195,6 @@ var cmd="rm  -rf "+cfg.config["BASE_PATH_FOR_FILE_DOWNLOAD"]+bucketName+"/";
       else{
         //trackProcess("makeDirectoryStatus","Success in Making directory for"+bucketName,gpId,"S");
         
-        //callback(null,bucketName,desGlacier,gpId);
       }
   });
 
@@ -393,7 +391,7 @@ function readAndUpload(fromPathArray,callback){
 
 function uploadBucketDataIterator(fromPathArray,callback) {
 	async.waterfall([function dummy(callback){callback(null, fromPathArray.path,fromPathArray.desGlacier,fromPathArray.fileName,fromPathArray.gpId,fromPathArray.archiveDes);}
-    ,readFilesFromDirectory,calculateCheckSum,uploadToS3,logMetadata],
+    ,readFilesFromDirectory,calculateCheckSum,uploadToGlacier,logGMetadata],
     function(err,result){
 
 		  if(err){
@@ -471,41 +469,19 @@ callback(null,buffer,desGlacier,archiveDes);
 
 function calculateCheckSum(buffer,path,desGlacier,fileName,gpId,archiveDes,callback){
 
-  chksum.computeCheckSum(path);
-  callback(null,buffer,path,desGlacier,fileName,gpId,archiveDes)
+
+  
+  chksum.computeCheckSum(buffer,path,desGlacier,fileName,gpId,archiveDes,callback);
+  
 }
 
-function uploadToS3(buffer,path,desGlacier,fileName,gpId,archiveDes,callback){
 
-  trackProcess("uploadToS3","Uploading File "+fileName+"to S3" ,gpId,"S");
-  var obj={Bucket:"rawss3test",Key:archiveDes,Body:buffer}
-  desGlacier.client.putObject(obj,function(error,data){
-	  if(error){
-      trackProcess("uploadToS3Status","Error in Uploading File "+fileName+"to S3 because "+error ,gpId,"F");
-	  } 
-	   else{
-      trackProcess("uploadToS3Status","Success in Uploading File "+fileName+"to S3 ",gpId,"S");
-    //console.log("DATA Returned"+JSON.stringify(data));
-      
-    }
-    callback(null,archiveDes,fileName,gpId);
-    });
-}
-
-function logMetadata(archiveDes,fileName,gpId,callback){
-
-  trackProcess("logMetadata","Logging metadata: archiveDes "+archiveDes+" Last Modified Date"+objMap[fileName]+" to mongo" ,gpId,"F");
-  track.saveS3MetadataToMongo(archiveDes,objMap[fileName]);
-  callback(null);
-
-}
-
-function uploadToGlacier(key,buffer,desGlacier,archiveDes,callback){
+function uploadToGlacier(buffer,path,desGlacier,fileName,gpId,archiveDes,checksum,callback){
 
   trackProcess("uploadToGlacier","Uploading File "+fileName+"to Glacier" ,gpId,"S");
 
   var obj={vaultName:"tests3toglacier",accountId:'317993448580',archiveDescription:archiveDes
-  //checksum:"a24d5dcb59a62d925323b1fe72c665aab5f5589a3c592ce7b72c96068ca2ea9a"
+  //checksum:checksum
   ,body:buffer};
 
   desGlacier.client.uploadArchive(obj,function(error,data){
@@ -514,16 +490,17 @@ function uploadToGlacier(key,buffer,desGlacier,archiveDes,callback){
 
     }else{
       trackProcess("uploadToGlacierStatus","Success in Uploading File "+fileName+"to Glacier ",gpId,"S");
+      console.log("DATA"+JSON.stringify(data)+"FOR FILENAME"+fileName);
       
     }
-    callback(null,archiveDes,fileName,gpId,data);
+    callback(null,archiveDes,fileName,gpId,data.archiveId);
   });
 }
 
-function logGMetadata(archiveDes,fileName,gpId,data,callback){
+function logGMetadata(archiveDes,fileName,gpId,archiveId,callback){
 
   trackProcess("logMetadata","Logging metadata: archiveDes "+archiveDes+" Last Modified Date"+objMap[fileName]+" to mongo" ,gpId,"F");
-  track.saveS3MetadataToMongo(archiveDes,objMap[fileName],data);
+  track.saveS3MetadataToMongo(archiveDes,objMap[fileName],archiveId);
   callback(null);
 
 }
@@ -561,3 +538,30 @@ function trackProcess(schemaAttrib, message,gpId,status){
     
 }
 exports.trackProcess=trackProcess;
+
+
+//For testing purpose
+function uploadToS3(buffer,path,desGlacier,fileName,gpId,archiveDes,checksum,callback){
+  
+  trackProcess("uploadToS3","Uploading File "+fileName+"to S3" ,gpId,"S");
+  var obj={Bucket:"rawss3test",Key:archiveDes,Body:buffer}
+  desGlacier.client.putObject(obj,function(error,data){
+    if(error){
+      trackProcess("uploadToS3Status","Error in Uploading File "+fileName+"to S3 because "+error ,gpId,"F");
+    } 
+     else{
+      trackProcess("uploadToS3Status","Success in Uploading File "+fileName+"to S3 ",gpId,"S");
+    //console.log("DATA Returned"+JSON.stringify(data));
+      
+    }
+    callback(null,archiveDes,fileName,gpId);
+    });
+}
+
+function logMetadata(archiveDes,fileName,gpId,callback){
+
+  trackProcess("logMetadata","Logging metadata: archiveDes "+archiveDes+" Last Modified Date"+objMap[fileName]+" to mongo" ,gpId,"F");
+  track.saveS3MetadataToMongo(archiveDes,objMap[fileName]);
+  callback(null);
+
+}

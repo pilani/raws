@@ -12,7 +12,7 @@ var position=null;
 
 exports.computeCheckSum=computeCheckSum;
 
-function computeCheckSum(path){
+function computeCheckSum(buffer,path,desGlacier,fileName,gpId,archiveDes,callback){
 
     var sha256hashes=new Array(numchunks);
     var idx = 0;
@@ -20,13 +20,17 @@ function computeCheckSum(path){
         function(err,result ){
             if(err){
               // trackProcess("finalWaterfallCall","error in calling async.waterfall for account "+credentials+ " MESSAGE : "+err,gpId,"F");
-                callback(err);
+               // callback(err);
             }
             else{
                 //trackProcess("finalWaterfallCall","final Iterator callback",gpId,"S");
-                //callback();
+                console.log("FINAAAAAAAAAAAAAALLLLLLLLL "+result);
+                callback(null,buffer,path,desGlacier,fileName,gpId,archiveDes,result);
+
             }
+
     });
+    
 
 }
 
@@ -55,13 +59,16 @@ function computeNumChunks(path,sha256hashes,idx,callback){
            
           
 function readFile(position,fd,sha256hashes,idx,callback){
-    fs.read(fd,buff,0,1024*1024,position,function(err,data,buffer){
+    fs.read(fd,buff,0,1024*1024,position,function(err,data,buff){
         console.log("bytes read" + data);    
+       // console.log("BUFFFER"+buffer);
+        console.log("BUFFFFFF"+buff);
                      
         if(data>0){
             position=position+ONE_MB;
             var shasum = crypto.createHash(algo);
-            shasum.update(buffer);
+         
+            shasum.update(buff);
             sha256hashes[idx++]  = shasum.digest('hex');
             readFile(position,fd,sha256hashes,idx,callback);
         }
@@ -117,7 +124,7 @@ function calculateFinalChecksum(sha256hashes,callback){
     }
 
     console.log("final array"+prevlvlHashes[0]);
-    callback();
+    callback(null,prevlvlHashes[0]);
 }
 
    

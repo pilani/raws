@@ -21,6 +21,7 @@ var logging=require('./logging.js');
   , mapStatus                           :String
   , getBuckets                          :String
   ,groupId                              :String
+  ,archiveID                           :String
   ,listBucketStatus                     :String
   ,createBucketArray                    :String
   ,timestamp                            :String
@@ -58,6 +59,7 @@ var logging=require('./logging.js');
   var S3MetadataSchema = mongoose.Schema({
     ObjectName:String,
     LastModified:Date
+    ,archiveID  :String
   });
   
 
@@ -65,11 +67,13 @@ var logging=require('./logging.js');
   exports.trackS3Metadata=trackS3Metadata;
   var s3Copy = mongoose.model('saves3tracker',copyS3Schema);
 
-  exports.saveS3MetadataToMongo=function saveS3MetadataToMongo(ObjectName,creationDate){
+  exports.saveS3MetadataToMongo=function saveS3MetadataToMongo(ObjectName,creationDate,archiveID){
 
   var trackMetadata = new trackS3Metadata({});
   trackMetadata.setValue("ObjectName",ObjectName);
   trackMetadata.setValue("LastModified",creationDate);
+  trackMetadata.setValue("archiveID",archiveID);
+
   trackMetadata.save(function(err,result){
 
          saveTracker(err,result);
@@ -85,7 +89,7 @@ function saveTracker(err,result){
         logging.logError("ERROR in saving to mongo Db"+err);
     }
     else{
-       // console.log("RESULT" + result);
+       //console.log("RESULT" + result);
     }
 }
 
