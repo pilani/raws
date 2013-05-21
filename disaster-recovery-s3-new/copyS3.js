@@ -90,9 +90,9 @@ function createBucketArray(bucketData,desGlacier,s3,gpId,map,callback){
 
   bucketArray[0]="apacrdatakeyvaluemapsfailure";
   bucketArray[1]="317993448580-ap-northeast-1";
-  bucketArray[2]="boss-ami";
+  bucketArray[2]="lis-bpimages";
   bucketArray[3]="cloudwatchscript";
- bucketArray[4]="tests3toglacier";
+ //bucketArray[4]="tests3toglacier";
   callback(null,bucketArray,desGlacier,s3,gpId,map);
 }
 
@@ -210,7 +210,7 @@ function getObjectVersioning(bucket,desGlacier,s3,gpId,keymarker,objectDataArray
 //var objectDataArray=new Array();
 
   trackProcess("getObjectVersioning","Getting Object Versioning ",gpId,"S");
-  var obj={Bucket:bucket,MaxKeys:1,KeyMarker:keymarker};
+  var obj={Bucket:bucket,KeyMarker:keymarker};
 
   s3.client.listObjectVersions(obj,function(err,data){
     if(err){
@@ -321,7 +321,7 @@ function createUploadParams(pathArray,desGlacier,gpId,objMap,map,callback){
   var uploadArray=new Array();
   for(var path in pathArray){
 
-    var archiveDes=pathArray[path].replace(/\//gi,".").replace(".home.deepikajain.node-v0.8.17.S3.bucket_data.","");
+    var archiveDes=pathArray[path].replace(/\//gi,".").replace(".home.ubuntu.S3.bucket_data.","");
     var len=pathArray[path].split('/').length;
     var fileName=pathArray[path].split('/')[len-1];
     var pathKey=new uploadParams(pathArray[path],desGlacier,archiveDes,fileName,gpId,objMap,map);
@@ -490,7 +490,7 @@ function uploadToGlacier(buffer,path,desGlacier,fileName,gpId,archiveDes,checksu
 
   trackProcess("uploadToGlacier","Uploading File "+fileName+"to Glacier" ,gpId,"S");
 
-  var obj={vaultName:"tests3toglacier",accountId:'317993448580',archiveDescription:archiveDes,
+  var obj={vaultName:"s3backup",accountId:'317993448580',archiveDescription:archiveDes,
   checksum:checksum
   ,body:buffer};
 
