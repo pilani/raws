@@ -77,44 +77,44 @@ function getBuckets(s3,desGlacier,account,gpId,map,callback){
       }
       else{
         trackProcess("listBucketStatus","Getting the list of buckets from S3 succeeded ",gpId,"S");
-        callback(null,data,desGlacier,account,s3,gpId,map);
+        callback(null,data,desGlacier,s3,gpId,map);
       }  
   });
 }
 
 
-function createBucketArray(bucketData,desGlacier,account,s3,gpId,map,callback){
+function createBucketArray(bucketData,desGlacier,s3,gpId,map,callback){
 
   trackProcess("createBucketArray","Creating bucket array",gpId,"S");
   var bucketArray=new Array();
 
-  bucketArray[0]="apacrdatakeyvaluemapsfailure";
+  bucketArray[3]="apacrdatakeyvaluemapsfailure";
   bucketArray[1]="317993448580-ap-northeast-1";
-  bucketArray[2]="boss-ami";
- // bucketArray[3]="cloudwatchscript";
- bucketArray[3]="tests3toglacier";
-  callback(null,bucketArray,desGlacier,account,s3,gpId,map);
+//  bucketArray[2]="lis-bpimages";
+// bucketArray[2]="cloudwatchscript";
+ bucketArray[2]="tests3toglacier";
+bucketArray[0]="lis-bpimages";
+  callback(null,bucketArray,desGlacier,s3,gpId,map);
 }
 
-function bucketParams(bucketArray,desGlacier,account,s3,gpId,map,callback){
+function bucketParams(bucketArray,desGlacier,s3,gpId,map,callback){
  
   var bucketParamArray=new Array();
     for(var buck in bucketArray){
-      var key=new bucketParameters(bucketArray[buck],desGlacier,account,s3,gpId,map);
+      var key=new bucketParameters(bucketArray[buck],desGlacier,s3,gpId,map);
         bucketParamArray[buck]=key;
     }
     callback(null,bucketParamArray);
 
 }
 
-function bucketParameters(bucketName,desGlacier,account,s3,gpId,map){
+function bucketParameters(bucketName,desGlacier,s3,gpId,map){
 
   this.bucketName=bucketName;
   this.desGlacier=desGlacier;
   this.s3=s3;
   this.gpId=gpId;
   this.map=map;
-  this.account=account;
 }
 
 function filterBuckets(bucketArray,callback){
@@ -171,7 +171,7 @@ function getObjectsAndUpload(bucketDataArray,callback){
 function readBucketDataIterator(bucketDataArray,callback){
 
 async.waterfall([function dummy(callback){callback(null, bucketDataArray.bucketName,
-  bucketDataArray.desGlacier,bucketDataArray.s3,bucketDataArray.gpId,"",new Array(),bucketDataArray.map,bucketDataArray.account);},getObjectVersioning,createMapForObjectVersions,
+  bucketDataArray.desGlacier,bucketDataArray.s3,bucketDataArray.gpId,"",new Array(),bucketDataArray.map);},getObjectVersioning,createMapForObjectVersions,
   makeDirectoryForEachBucket,getPathOfFilesInEachBucket,createUploadParams,checkForObjectPresence,
   readAndUpload],function(err,result){
     if(err){
@@ -180,14 +180,14 @@ async.waterfall([function dummy(callback){callback(null, bucketDataArray.bucketN
     }
     else{
       trackProcess("readBucketDataIteratorStatus","readBucketDataIterator Success",bucketDataArray.gpId,"S");
-     //deleteBucketFolder(bucketDataArray.bucketName);
+//     deleteBucketFolder(bucketDataArray.bucketName);
       callback(null);
     }
   });
 }
 
 function deleteBucketFolder(bucketName){
- // console.log("inside delete");
+  console.log("inside delete");
 var cmd="rm  -rf "+cfg.config["BASE_PATH_FOR_FILE_DOWNLOAD"]+bucketName+"/";
   child = exec(cmd,function (error, stdout, stderr) {
       if (error) {
@@ -205,7 +205,7 @@ var cmd="rm  -rf "+cfg.config["BASE_PATH_FOR_FILE_DOWNLOAD"]+bucketName+"/";
 
 
 
-function getObjectVersioning(bucket,desGlacier,s3,gpId,keymarker,objectDataArray,map,account,callback){
+function getObjectVersioning(bucket,desGlacier,s3,gpId,keymarker,objectDataArray,map,callback){
 
 
 //var objectDataArray=new Array();
@@ -224,7 +224,7 @@ function getObjectVersioning(bucket,desGlacier,s3,gpId,keymarker,objectDataArray
         getObjectVersioning(bucket,desGlacier,s3,gpId,data.NextKeyMarker,objectDataArray,map,callback);
 
       }else{
-        callback(null,bucket,desGlacier,objectDataArray,gpId,map,account);
+        callback(null,bucket,desGlacier,objectDataArray,gpId,map);
       }
 
     }
@@ -234,7 +234,7 @@ function getObjectVersioning(bucket,desGlacier,s3,gpId,keymarker,objectDataArray
 }
 
 
-function createMapForObjectVersions(bucket,desGlacier,data,gpId,map,account,callback){
+function createMapForObjectVersions(bucket,desGlacier,data,gpId,map,callback){
 var objMap=new Object();
   
   trackProcess("objectVersioning","Creating map for object Versioning data",gpId,"S");
@@ -250,10 +250,10 @@ var objMap=new Object();
 
     } 
   }
-  callback(null,bucket,desGlacier,objMap,gpId,map,account);
+  callback(null,bucket,desGlacier,objMap,gpId,map);
 }
  
-function makeDirectoryForEachBucket(bucketName,desGlacier,objMap,gpId,map,account,callback){
+function makeDirectoryForEachBucket(bucketName,desGlacier,objMap,gpId,map,callback){
 
   trackProcess("makeDirectory","Making directory for each bucket",gpId,"S");
   var cmd="mkdir -p "+cfg.config["BASE_PATH_FOR_FILE_DOWNLOAD"]+bucketName;
@@ -265,33 +265,34 @@ function makeDirectoryForEachBucket(bucketName,desGlacier,objMap,gpId,map,accoun
       else{
         trackProcess("makeDirectoryStatus","Success in Making directory for"+bucketName,gpId,"S");
         
-        callback(null,bucketName,desGlacier,gpId,objMap,map,account);
+        callback(null,bucketName,desGlacier,gpId,objMap,map);
       }
   });
 }
 
 
-function getObjectsForEachBucket(bucketName,desGlacier,gpId,objMap,map,account,callback){
+function getObjectsForEachBucket(bucketName,desGlacier,gpId,objMap,map,callback){
 
   trackProcess("getObjects","Getting Objects for Bucket "+bucketName,gpId,"S");  
-	var cmd="s3cmd --config=/home/deepikajain/node-v0.8.17/S3/"+account+".txt get --recursive s3://"+bucketName+" bucket_data/"+bucketName+ "  --force  > junk 2>&1";
-	child = exec(cmd,function (error, stdout, stderr) {
+	var cmd="s3cmd get --recursive s3://"+bucketName+" bucket_data/"+bucketName+ "  --force > junk.txt 2>&1";
+	child = exec(cmd,{maxBuffer:200*1024},function (error, stdout, stderr) {
 
     	if (error) {
-        trackProcess("getObjectsStatus","Getting Objects for Bucket "+bucketName+" Failed because "+error,gpId,"F");  
-      			console.log("STDERRR" + stderr);
+        trackProcess("getObjectsStatus","Getting Objects for Bucket "+bucketName+" Failed because "+error+" "+stderr,gpId,"F");  
+//console.log("STDOUT " + stdout);
+//console.log("STDERRR"+stderr);
+      			
     	}
     	else{
-        console.log("STDOUT"+stdout);
-        console.log("STDERRRRR"+stderr);
+//console.log("STDOUT " + stdout);
+//console.log("STDERRR"+stderr);
         trackProcess("getObjectsStatus","Getting Objects for Bucket "+bucketName+" Succeeded",gpId,"S");  
-				callback(null,bucketName,desGlacier,gpId,objMap,map,account);
-    	}
-	});
+				callback(null,bucketName,desGlacier,gpId,objMap,map);}
+});
 }
 
 
-function getPathOfFilesInEachBucket(bucketName,desGlacier,gpId,objMap,map,account,callback){
+function getPathOfFilesInEachBucket(bucketName,desGlacier,gpId,objMap,map,callback){
 
   trackProcess("getPathOfFiles","Getting path of files in bucket "+bucketName,gpId,"S");  
   
@@ -323,8 +324,8 @@ callback(null,files,desGlacier,gpId)
 function createUploadParams(pathArray,desGlacier,gpId,objMap,map,callback){
   var uploadArray=new Array();
   for(var path in pathArray){
-//to change in ubuntu instance
-    var archiveDes=pathArray[path].replace(/\//gi,".").replace(".home.deepikajain.node-v0.8.17.S3.bucket_data.","");
+
+    var archiveDes=pathArray[path].replace(/\//gi,".").replace(".home.ubuntu.S3.bucket_data.","");
     var len=pathArray[path].split('/').length;
     var fileName=pathArray[path].split('/')[len-1];
     var pathKey=new uploadParams(pathArray[path],desGlacier,archiveDes,fileName,gpId,objMap,map);
@@ -347,24 +348,19 @@ function uploadParams(path,desGlacier,archiveDes,fileName,gpId,objMap,map){
   this.map=map;
 
 }
-
 function filter(srcArray){
 var count =srcArray.length;
 var array = new Array();
   for(var element=0;element<srcArray.length;element++){
-    console.log("ELEMENT" + element);
-
-    if(!(filterObjectsIterator(srcArray[element],array))){
-      
-           srcArray.splice(element,1);
-           element=element-1;
-           
-    }
     
+    if(!(filterObjectsIterator(srcArray[element],array))){
+          // array.push(srcArray[element]);
+srcArray.splice(element,1);
+element=element-1;
+    }
   }
-  console.log("FINAL ARRAY TO BE LOGGED TO MONGO"+JSON.stringify(array));
-  track.saveFilterObjectTracker(array);
 return srcArray;
+track.saveFilterObjectTracker(array);
 }
 //to upload bulk array to mongo
 function uploadFilterObjectArray(schemaAttrb,message,groupId,status){
@@ -373,10 +369,13 @@ function uploadFilterObjectArray(schemaAttrb,message,groupId,status){
   this.groupId=groupId;
   this.status=status;
 }
+
+
 function trackFilterProcess(schemaAttrb,message,groupId,status,array){
   
 array.push(new uploadFilterObjectArray(schemaAttrb,message,groupId,status));
 }
+
 
 function checkForObjectPresence(uploadArray,callback){
 
@@ -389,20 +388,19 @@ function checkForObjectPresence(uploadArray,callback){
 function filterObjectsIterator(uploadArray,array){
 
   if(uploadArray.map[uploadArray.archiveDes]==undefined){
-    console.log("INSIDE UNDEFINED....SO RETURNING TRUE");
-       // trackProcess("objectNotPresent","Object "+uploadArray.fileName+" is not present in destination..So adding",uploadArray.gpId,"S");    
-         trackFilterProcess("objectNotPresent","Object "+uploadArray.fileName+" is not present in destination..So adding",uploadArray.gpId,"S",array)
-            return true;
+//        trackProcess("objectNotPresent","Object "+uploadArray.archiveDes+" is not present in destination..So adding",uploadArray.gpId,"S");    
+ trackFilterProcess("objectNotPresent","Object "+uploadArray.fileName+" is not present in destination..So adding",uploadArray.gpId,"S",array); 
+          return true;
 
           }   
           else if(uploadArray.map[uploadArray.archiveDes] < uploadArray.objMap[uploadArray.fileName]){
-            console.log("INSIDE MODFIED....SO RETURNING TRUE");
-            trackFilterProcess("objectModified","Object "+uploadArray.fileName+" has been modified..So adding",uploadArray.gpId,"S",array);    
+//            trackProcess("objectModified","Object "+uploadArray.archiveDes+" has been modified..So adding",uploadArray.gpId,"S");    
+ trackFilterProcess("objectNotPresent","Object "+uploadArray.fileName+" is not present in destination..So adding",uploadArray.gpId,"S",array);
             return true;
           }
           else{
-            console.log("INSIDE ELSE");
-            trackFilterProcess("objectPresent","Object "+uploadArray.fileName+" is already present in destination..So not adding",uploadArray.gpId,"S",array);    
+ trackFilterProcess("objectNotPresent","Object "+uploadArray.fileName+" is not present in destination..So adding",uploadArray.gpId,"S",array);
+  //          trackProcess("objectPresent","Object "+uploadArray.archiveDes+" is already present in destination..So not adding",uploadArray.gpId,"S");    
             return false;
           }
 /*
@@ -412,11 +410,40 @@ function filterObjectsIterator(uploadArray,array){
           }*/
 
 }
+function acheckForObjectPresence(uploadArray,callback){
 
+  trackProcess("FilterObjects","Filtering Objects If already present in the destination",uploadArray.gpId,"S");  
+  async.filter(uploadArray,filterObjectsIterator,function(result){
+
+    
+      trackProcess("FilterObjectsResult","Final Result after Filtering Objects "+result,uploadArray.gpId,"S");  
+       
+        callback(null,result);
+      // }
+            
+    });
+
+}
+
+function afilterObjectsIterator(uploadArray,callback){
+
+  if(uploadArray.map[uploadArray.archiveDes]==undefined){
+        trackProcess("objectNotPresent","Object "+uploadArray.archiveDes +" is not present in destination..So adding",uploadArray.gpId,"S");    
+            callback(true);
+
+          }   
+          else if(uploadArray.map[uploadArray.archiveDes] < uploadArray.objMap[uploadArray.fileName]){
+            trackProcess("objectModified","Object "+uploadArray.archiveDes+" has been modified..So adding",uploadArray.gpId,"S");    
+            callback(true);
+          }
+          else{
+            trackProcess("objectPresent","Object "+uploadArray.archiveDes+" is already present in destination..So not adding",uploadArray.gpId,"S");    
+            callback(false);
+          }
+}
 
 
 function readAndUpload(fromPathArray,callback){
-  console.log("from path array"+fromPathArray);
   //forEachSeries because if parallel is used it will overwrite the checksum data that is being calculated for each object
 	async.forEachLimit(fromPathArray,500,uploadBucketDataIterator,function(err){
  		if (err){
@@ -464,6 +491,50 @@ function readFilesFromDirectory(path,desGlacier,fileName,gpId,archiveDes,objMap,
   });
 }
 
+/*
+function createArchiveDesForGlacier(buffer,path,desGlacier,fileName,gpId,callback){
+trackProcess("createArchiveDes","Creating Archive Description for "+fileName,gpId,"S");
+  var archiveDes=path.replace(/\//gi,".");
+  callback(null,buffer,desGlacier,archiveDes,fileName,gpId);
+
+}
+
+
+function createMetadata(buffer,path,desGlacier,archiveDes,fileName,callback){
+
+  var metadata="ARCHIVE NAME : "+archiveDes+"PATH :" +path+"CREATION TIMESTAMP :"+new Date();
+  callback(null,buffer,path,desGlacier,archiveDes,metadata,fileName);
+
+}
+
+
+function createMetadataFile(buffer,path,desGlacier,archiveDes,metadata,fileName,callback){
+
+  var cmd="touch /home/deepikajain/node-v0.8.17/S3/bucket_data/"+key+".txt";
+  //console.log("CMDDDDD" + cmd);
+
+  child = exec(cmd,function (error, stdout, stderr) {
+      if (error) {
+        console.log('exec error: ' + error);
+      }
+      else{
+        fs.writeFile("/home/deepikajain/node-v0.8.17/S3/bucket_data/"+key+".txt",metadata,function (err) {
+          if (err) {
+            console.log(err);
+          }    
+        });
+        callback(null,buffer,desGlacier,archiveDes,fileName);
+      }
+  });
+}
+
+
+function logMetadata(buffer,desGlacier,archiveDes,fileName,callback){
+
+s3Meta.saveS3MetadataToMongo(archiveDes,objMap[fileName]);
+callback(null,buffer,desGlacier,archiveDes);
+
+}*/
 
 function calculateCheckSum(buffer,path,desGlacier,fileName,gpId,archiveDes,objMap,callback){
 
@@ -483,20 +554,22 @@ function uploadToGlacier(buffer,path,desGlacier,fileName,gpId,archiveDes,checksu
 
   trackProcess("uploadToGlacier","Uploading File "+fileName+"to Glacier" ,gpId,"S");
 
-  var obj={vaultName:"tests3toglacier",accountId:'317993448580',archiveDescription:archiveDes,
+  var obj={vaultName:"s3backup",accountId:'317993448580',archiveDescription:archiveDes,
   checksum:checksum
   ,body:buffer};
 
   desGlacier.client.uploadArchive(obj,function(error,data){
     if(error){
       trackProcess("uploadToGlacierStatus","Error in Uploading File "+fileName+"to Glacier because "+error ,gpId,"F");
-      callback(null,archiveDes,fileName,gpId,"",objMap);
+     callback(null,archiveDes,fileName,gpId,"",objMap);
+
     }else{
       trackProcess("uploadToGlacierStatus","Success in Uploading File "+fileName+"to Glacier ",gpId,"S");
       console.log("DATA"+JSON.stringify(data)+"FOR FILENAME"+fileName);
-    callback(null,archiveDes,fileName,gpId,data.archiveId,objMap);  
-    }
+  callback(null,archiveDes,fileName,gpId,data.archiveId,objMap);
     
+    }
+//    callback(null,archiveDes,fileName,gpId,data.archiveId,objMap);
   });
 }
 
@@ -537,8 +610,8 @@ function generateTimestamp(){
 
 function trackProcess(schemaAttrib, message,gpId,status){
 
-    track.copySaveTrack(schemaAttrib,message,message,generateTimestamp(),gpId,status);
-    
+//    track.copySaveTrack(schemaAttrib,message,message,generateTimestamp(),gpId,status);
+    console.log("SCHEMAAATRIB "+schemaAttrib+" MESSAGE    "+message);
 }
 exports.trackProcess=trackProcess;
 
@@ -568,3 +641,4 @@ function logMetadata(archiveDes,fileName,gpId,callback){
   callback(null);
 
 }
+

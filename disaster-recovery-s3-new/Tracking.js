@@ -81,6 +81,16 @@ var logging=require('./logging.js');
     });
   }
 
+function saveFilterObjectTracker(obj){
+s3Copy.collection.insert(obj,{},function(err){
+    
+   if(err){
+    console.log(" error in flushing to mongo "+err);
+   }else{ console.log(" successfully flished to mongo "+new Date()) };
+ });
+
+}
+exports.saveFilterObjectTracker=saveFilterObjectTracker;
 
 function saveTracker(err,result){
     
@@ -89,7 +99,7 @@ function saveTracker(err,result){
         logging.logError("ERROR in saving to mongo Db"+err);
     }
     else{
-       //console.log("RESULT" + result);
+       console.log("RESULT" + result);
     }
 }
 
