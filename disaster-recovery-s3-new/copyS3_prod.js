@@ -15,9 +15,9 @@ var walk    = require('walk');
 //launchCopyS3();
 exports.launchCopyS3=function launchCopyS3(){
 
-    console.log("copy launched");
+      console.log("copy launched");
     var kvmap = cfg.config["KEY_REGION_S3_GLACIER"];  
-     var gpId=generateGroupId(Object.keys(kvmap));
+     var gpId=generateGroupId(Object.keys(kvmap),kvmap[Object.keys(kvmap)][0].sorce,kvmap[Object.keys(kvmap)][0].dest);
     async.forEachSeries(Object.keys(kvmap),iterator,function(err,callback){
         if(err)
         {
@@ -33,9 +33,9 @@ exports.launchCopyS3=function launchCopyS3(){
 
 
 function iterator(credentials, callback){ 
- var gpId=generateGroupId(credentials);  
+ var gpId=generateGroupId(credentials,cfg.config["KEY_REGION_S3_GLACIER"][credentials][0].sorce,cfg.config["KEY_REGION_S3_GLACIER"][credentials][0].dest);  
 
-    async.waterfall([function dummy(callback){callback(null, credentials);} ,s3Client.getSrcS3Client,
+    async.waterfall([function dummy(callback){callback(null, credentials,gpId);} ,s3Client.getSrcS3Client,
       s3Client.getDestGlacierClient,loadMongoToMap,getBuckets,createBucketArray,
       bucketParams,filterBuckets,getObjectsAndUpload],
         function(err,result ){
@@ -44,16 +44,16 @@ function iterator(credentials, callback){
             callback(err);
         }
         else{
-            trackProcess("finalWaterfallCall","final Iterator callback",gpId,"S");
+            trackProcess("finalWaterfallCall","final Iterator callback",gpId,"completed");
             callback();}
         });
     }
 
 
-function loadMongoToMap(s3,desGlacier,account,callback){
+function loadMongoToMap(s3,desGlacier,account,gpId,callback){
 
  var map=new Object();
-  var gpId=generateGroupId(account);
+  //var gpId=generateGroupId(account,cfg.config["KEY_REGION_S3_GLACIER"][account][0].sorce,cfg.config["KEY_REGION_S3_GLACIER"][credentials][0].dest);
   trackProcess("loadingMap","Loading metadata details from mongo to map",gpId,"S");
   track.trackS3Metadata.find(function(err,result){
   if(err){
@@ -77,7 +77,7 @@ function getBuckets(s3,desGlacier,account,gpId,map,callback){
       }
       else{
         trackProcess("listBucketStatus","Getting the list of buckets from S3 succeeded ",gpId,"S");
-        callback(null,data,desGlacier,s3,gpId,map);
+        callback(null,data,desGlacier,account,s3,gpId,map);
       }  
   });
 }
@@ -171,7 +171,7 @@ function getObjectsAndUpload(bucketDataArray,callback){
 function readBucketDataIterator(bucketDataArray,callback){
 
 async.waterfall([function dummy(callback){callback(null, bucketDataArray.bucketName,
-  bucketDataArray.desGlacier,bucketDataArray.s3,bucketDataArray.gpId,"",new Array(),bucketDataArray.map);},getObjectVersioning,createMapForObjectVersions,
+  bucketDataArray.desGlacier,bucketDataArray.s3,bucketDataArray.gpId,"",new Array(),bucketDataArray.map,bucketDataArray.account);},getObjectVersioning,createMapForObjectVersions,
   makeDirectoryForEachBucket,getPathOfFilesInEachBucket,createUploadParams,checkForObjectPresence,
   readAndUpload],function(err,result){
     if(err){
@@ -180,7 +180,7 @@ async.waterfall([function dummy(callback){callback(null, bucketDataArray.bucketN
     }
     else{
       trackProcess("readBucketDataIteratorStatus","readBucketDataIterator Success",bucketDataArray.gpId,"S");
-//     deleteBucketFolder(bucketDataArray.bucketName);
+     //deleteBucketFolder(bucketDataArray.bucketName);
       callback(null);
     }
   });
@@ -205,7 +205,7 @@ var cmd="rm  -rf "+cfg.config["BASE_PATH_FOR_FILE_DOWNLOAD"]+bucketName+"/";
 
 
 
-function getObjectVersioning(bucket,desGlacier,s3,gpId,keymarker,objectDataArray,map,callback){
+function getObjectVersioning(bucket,desGlacier,s3,gpId,keymarker,objectDataArray,map,account,callback){
 
 
 //var objectDataArray=new Array();
@@ -221,10 +221,10 @@ function getObjectVersioning(bucket,desGlacier,s3,gpId,keymarker,objectDataArray
 
       objectDataArray= objectDataArray.concat(data.Versions);
       if(data.IsTruncated==true){
-        getObjectVersioning(bucket,desGlacier,s3,gpId,data.NextKeyMarker,objectDataArray,map,callback);
+        getObjectVersioning(bucket,desGlacier,s3,gpId,data.NextKeyMarker,objectDataArray,map,account,callback);
 
       }else{
-        callback(null,bucket,desGlacier,objectDataArray,gpId,map);
+        callback(null,bucket,desGlacier,objectDataArray,gpId,map,account);
       }
 
     }
@@ -234,7 +234,7 @@ function getObjectVersioning(bucket,desGlacier,s3,gpId,keymarker,objectDataArray
 }
 
 
-function createMapForObjectVersions(bucket,desGlacier,data,gpId,map,callback){
+function createMapForObjectVersions(bucket,desGlacier,data,gpId,map,account,callback){
 var objMap=new Object();
   
   trackProcess("objectVersioning","Creating map for object Versioning data",gpId,"S");
@@ -250,10 +250,10 @@ var objMap=new Object();
 
     } 
   }
-  callback(null,bucket,desGlacier,objMap,gpId,map);
+  callback(null,bucket,desGlacier,objMap,gpId,map,account);
 }
  
-function makeDirectoryForEachBucket(bucketName,desGlacier,objMap,gpId,map,callback){
+function makeDirectoryForEachBucket(bucketName,desGlacier,objMap,gpId,map,account,callback){
 
   trackProcess("makeDirectory","Making directory for each bucket",gpId,"S");
   var cmd="mkdir -p "+cfg.config["BASE_PATH_FOR_FILE_DOWNLOAD"]+bucketName;
@@ -265,17 +265,17 @@ function makeDirectoryForEachBucket(bucketName,desGlacier,objMap,gpId,map,callba
       else{
         trackProcess("makeDirectoryStatus","Success in Making directory for"+bucketName,gpId,"S");
         
-        callback(null,bucketName,desGlacier,gpId,objMap,map);
+        callback(null,bucketName,desGlacier,gpId,objMap,map,account);
       }
   });
 }
 
 
-function getObjectsForEachBucket(bucketName,desGlacier,gpId,objMap,map,callback){
+function getObjectsForEachBucket(bucketName,desGlacier,gpId,objMap,map,account,callback){
 
   trackProcess("getObjects","Getting Objects for Bucket "+bucketName,gpId,"S");  
-	var cmd="s3cmd get --recursive s3://"+bucketName+" bucket_data/"+bucketName+ "  --force > junk.txt 2>&1";
-	child = exec(cmd,{maxBuffer:200*1024},function (error, stdout, stderr) {
+	var cmd="s3cmd --config=/home/ubuntu/code/"+account+".txt get --recursive s3://"+bucketName+" bucket_data/"+bucketName+ "  --force > junk.txt 2>&1";
+	child = exec(cmd,function (error, stdout, stderr) {
 
     	if (error) {
         trackProcess("getObjectsStatus","Getting Objects for Bucket "+bucketName+" Failed because "+error+" "+stderr,gpId,"F");  
@@ -287,12 +287,12 @@ function getObjectsForEachBucket(bucketName,desGlacier,gpId,objMap,map,callback)
 //console.log("STDOUT " + stdout);
 //console.log("STDERRR"+stderr);
         trackProcess("getObjectsStatus","Getting Objects for Bucket "+bucketName+" Succeeded",gpId,"S");  
-				callback(null,bucketName,desGlacier,gpId,objMap,map);}
+				callback(null,bucketName,desGlacier,gpId,objMap,map,account);}
 });
 }
 
 
-function getPathOfFilesInEachBucket(bucketName,desGlacier,gpId,objMap,map,callback){
+function getPathOfFilesInEachBucket(bucketName,desGlacier,gpId,objMap,map,account,callback){
 
   trackProcess("getPathOfFiles","Getting path of files in bucket "+bucketName,gpId,"S");  
   
@@ -325,7 +325,7 @@ function createUploadParams(pathArray,desGlacier,gpId,objMap,map,callback){
   var uploadArray=new Array();
   for(var path in pathArray){
 
-    var archiveDes=pathArray[path].replace(/\//gi,".").replace(".home.ubuntu.S3.bucket_data.","");
+    var archiveDes=pathArray[path].replace(/\//gi,".").replace(".home.ubuntu.code.disasterrecovery-s3.bucket_data.","");
     var len=pathArray[path].split('/').length;
     var fileName=pathArray[path].split('/')[len-1];
     var pathKey=new uploadParams(pathArray[path],desGlacier,archiveDes,fileName,gpId,objMap,map);
@@ -551,28 +551,24 @@ function calculateCheckSum(buffer,path,desGlacier,fileName,gpId,archiveDes,objMa
 
 
 function uploadToGlacier(buffer,path,desGlacier,fileName,gpId,archiveDes,checksum,objMap,callback){
+trackProcess("uploadToGlacier","Uploading File "+fileName+"to Glacier" ,gpId,"S");
 
-  trackProcess("uploadToGlacier","Uploading File "+fileName+"to Glacier" ,gpId,"S");
-
-  var obj={vaultName:"s3backup",accountId:'317993448580',archiveDescription:archiveDes,
+  var obj={vaultName:"tests3toglacier",accountId:'317993448580',archiveDescription:archiveDes,
   checksum:checksum
   ,body:buffer};
 
   desGlacier.client.uploadArchive(obj,function(error,data){
     if(error){
-      trackProcess("uploadToGlacierStatus","Error in Uploading File "+fileName+"to Glacier because "+error ,gpId,"F");
-     callback(null,archiveDes,fileName,gpId,"",objMap);
-
+      trackProcess("uploadToGlacierStatus","Uploading File "+fileName+"to Glacier failure because "+error ,gpId,"F");
+      callback(null,archiveDes,fileName,gpId,"",objMap);
     }else{
-      trackProcess("uploadToGlacierStatus","Success in Uploading File "+fileName+"to Glacier ",gpId,"S");
+      trackProcess("uploadToGlacierStatus","Uploading File "+fileName+"to Glacier Success",gpId,"S");
       console.log("DATA"+JSON.stringify(data)+"FOR FILENAME"+fileName);
-  callback(null,archiveDes,fileName,gpId,data.archiveId,objMap);
-    
+    callback(null,archiveDes,fileName,gpId,data.archiveId,objMap);  
     }
-//    callback(null,archiveDes,fileName,gpId,data.archiveId,objMap);
+    
   });
 }
-
 function logGMetadata(archiveDes,fileName,gpId,archiveId,objMap,callback){
 
   trackProcess("logMetadata","Logging metadata: archiveDes "+archiveDes+" Last Modified Date"+objMap[fileName]+" to mongo" ,gpId,"F");
@@ -581,7 +577,7 @@ function logGMetadata(archiveDes,fileName,gpId,archiveId,objMap,callback){
 
 }
 
-function generateGroupId(account){
+function generateGroupId(account,sorce,dest){
     var today = new Date();
     var dd = today.getDate();
     var mm = today.getMonth()+1; //January is 0!
@@ -595,7 +591,7 @@ function generateGroupId(account){
     } 
     today = mm+'/'+dd+'/'+yyyy;
 
-   return account+"_"+today;
+   return account+"_"+today+"_"+sorce+"_"+dest;
 
 }
 

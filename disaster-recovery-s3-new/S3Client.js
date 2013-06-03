@@ -1,7 +1,7 @@
 var config = require('./config.js');
 var AWS=require('aws-sdk');
 
-exports.getSrcS3Client = function getSrcS3Client(account,callback){
+exports.getSrcS3Client = function getSrcS3Client(account,gpId,callback){
 
 	console.log("inside source S3 cleint");
 		
@@ -9,10 +9,10 @@ exports.getSrcS3Client = function getSrcS3Client(account,callback){
   	   	
    	var srcS3=createS3Client(keys.accKey,keys.secKey);
 
-   	callback(null,account,srcS3);
+   	callback(null,account,srcS3,gpId);
 }
 
-exports.getDestGlacierClient = function getDestGlacierClient(account,srcS3,callback){
+exports.getDestGlacierClient = function getDestGlacierClient(account,srcS3,gpId,callback){
 	console.log("inside Destination S3 cleint");
 
 	
@@ -20,7 +20,7 @@ exports.getDestGlacierClient = function getDestGlacierClient(account,srcS3,callb
 
   	var desGlacier=createGlacierClient(keys.accKey,keys.secKey,keys.dest);
   	
-  	callback(null,srcS3,desGlacier,account);
+  	callback(null,srcS3,desGlacier,account,gpId);
 }
 
 function awsKeys(accKey,secKey,dest){
@@ -36,7 +36,7 @@ function getAWSKeysByAccountName(account){
 
 	var val = kvmap[account][0];
 
-	var keys = new  awsKeys(val["ak"],val["sak"],val["dest"]);
+	var keys = new  awsKeys(val["ak"],val["sak"],val["sorce"],val["dest"]);
 	
 	return keys;
 	

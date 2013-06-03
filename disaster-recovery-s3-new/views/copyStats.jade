@@ -1,0 +1,15 @@
+html
+head
+   title Disaster Recovery Copy Stats
+   link(rel='stylesheet', href='/stylesheets/bqhome.css')
+   script(type='text/javascript', src='/js/jquery-1.7.1.min.js')   
+   script(type='text/javascript', src='/js/jquery.blockUI.js')
+   script(type='text/javascript')	 function initCopyStats()	{	$.getJSON("/copyStatsReport",function(data){	alert(data);	var html='<table id="testTable" border="1"><thead><tr><th>DATE</th><th>SOURCE</th><<th>DESTINATION</th><th>OBJECTSINS3</th><th>OBJ IN GLCR SUC</th><th>OBJ GLCR FLD</th></tr></thead><tbody>';	for(var obj in data){	html+='<tr><td>'+data[obj].date+'</td><td>'+data[obj].source+'</td><td>'+data[obj].dest+'</td><td>'+data[obj].totObj+'</td><td>'+data[obj].succeded+'</td><td>'+data[obj].failed+' </tr></td>';	}	$('#divCopyStats').append(html);	}).error(function(xhr,status,error) { alert("No Data Found"); });	} 
+  body(onload="initCopyStats()")#page1
+  ul#tabs
+      li#tab1
+        a(href='/copyStats') Disaster Recovery Copy Stats
+      li#tab2
+        a(href='/siteMonitor') Disaster Recovery Stats
+br
+div#divCopyStats

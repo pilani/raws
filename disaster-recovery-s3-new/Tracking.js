@@ -12,8 +12,9 @@ var logging=require('./logging.js');
 
   });
 
+//schema defination
   var copyS3Schema = mongoose.Schema({
-    schedulerTriggerTime                :Date
+    schedulerTriggerTime                :String
    , finalasyncCall                     :String
   , finalWaterfallCall                  :String
   ,makeDirectoryStatus                  :String
@@ -24,7 +25,7 @@ var logging=require('./logging.js');
   ,archiveID                           :String
   ,listBucketStatus                     :String
   ,createBucketArray                    :String
-  ,timestamp                            :String
+  ,timestamp                            :Date
   ,status                               :String
   ,filterBuckets                        :String
   ,filterBucketStatus                   :String
@@ -51,7 +52,8 @@ var logging=require('./logging.js');
 ,uploadToS3                             :String
 ,uploadToS3Status                       :String
 ,logMetadata                            :String
-
+,uploadToGlacierStatus                   :String
+,timestampString                         :String
 });
 
 
@@ -61,14 +63,37 @@ var logging=require('./logging.js');
     LastModified:Date
     ,archiveID  :String
   });
+
+  var s3ObjCountSchema = mongoose.Schema({
+    totObjects:Number,
+    timestamp:Date,
+    groupId:String
+
+  });
   
 
   var trackS3Metadata = mongoose.model('savemetadata',S3MetadataSchema);
   exports.trackS3Metadata=trackS3Metadata;
   var s3Copy = mongoose.model('saves3tracker',copyS3Schema);
+  var s3ObjCnt = mongoose.model('saves3objcount',s3ObjCountSchema);
+  exports.s3ObjCnt=s3ObjCnt;
+
+
+  exports.saves3objcount=function saves3objcount(totObjects,timestamp,groupId){
+    var saves3objcnt=new s3ObjCnt({});
+    saves3objcnt.setValue("totObjects",totObjects);
+    saves3objcnt.setValue("timestamp",timestamp);
+    saves3objcnt.setValue("groupId",groupId);
+    saves3objcnt.save(function(err,result){
+
+         saveTracker(err,result);
+
+    });
+  }
+
+  
 
   exports.saveS3MetadataToMongo=function saveS3MetadataToMongo(ObjectName,creationDate,archiveID){
-
   var trackMetadata = new trackS3Metadata({});
   trackMetadata.setValue("ObjectName",ObjectName);
   trackMetadata.setValue("LastModified",creationDate);
@@ -81,38 +106,15 @@ var logging=require('./logging.js');
     });
   }
 
-function saveFilterObjectTracker(obj){
-s3Copy.collection.insert(obj,{},function(err){
-    
-   if(err){
-    console.log(" error in flushing to mongo "+err);
-   }else{ console.log(" successfully flished to mongo "+new Date()) };
- });
 
-}
-exports.saveFilterObjectTracker=saveFilterObjectTracker;
-
-function saveTracker(err,result){
-    
-    if(err){
-    
-        logging.logError("ERROR in saving to mongo Db"+err);
-    }
-    else{
-       console.log("RESULT" + result);
-    }
-}
-
-
-exports.copySaveTrack=function copySaveTrack(schemaAttrib, message,trackReportStatus,timestamp,gpId,status){
-
+exports.copySaveTrack=function copySaveTrack(schemaAttrib, message,trackReportStatus,timestampString,gpId,status){
     var track = new s3Copy({});
-   
     track.setValue(schemaAttrib,message);
     track.setValue("status",status);
     track.setValue("groupId",gpId);
-    track.setValue("timestamp",timestamp);
+    track.setValue("timestampString",timestampString);
     track.setValue("trackReportStatus",trackReportStatus);
+    track.setValue("timestamp",new Date());
     if(status=="S"){
       logging.logInfo(message);
     }
@@ -128,21 +130,67 @@ exports.copySaveTrack=function copySaveTrack(schemaAttrib, message,trackReportSt
 }
 
 
+function saveFilterObjectTracker(obj){
+s3Copy.collection.insert(obj,{},function(err){
+    
+   if(err){
+    console.log(" error in flushing to mongo "+err);
+   }else{ console.log(" successfully flushed to mongo "+new Date()) };
+ });
+
+}
+
+
+exports.saveFilterObjectTracker=saveFilterObjectTracker;
+
+function saveTracker(err,result){
+    
+    if(err){
+    
+        logging.logError("ERROR in saving to mongo Db"+err);
+    }
+    else{
+       console.log("RESULT" + result);
+    }
+}
+
+
 //trackFailure();
 function trackFailure(callback){
    var today = new Date();
    var d2=new Date();
-   d2.setHours(today.getHours() -24);
+   var totObjInS3;
+   var noOfObjInGlacier;
+   //d2.setHours(today.getHours() -24);
+   d2.setDate(today.getDate()-10);
+   console.log("d2...."+d2);
    var status; 
 
-    s3Copy.find().sort({timestamp:-1}).limit(1).exec(function(err, result) { 
-     
+  trackS3Metadata.distinct('ObjectName').exec(function(err,ObjectName){
+
+noOfObjInGlacier=ObjectName.length;
+});
+    s3Copy.find({status:"completed"}).sort({timestamp:-1}).limit(1).exec(function(err, results) { 
+      if(err){
+
+        console.log("EROOOOOOOOOOOORRRRRRRR"+err);
+      }
+     s3ObjCnt.find({groupId:results[0].groupId}).sort({timestamp:-1}).limit(1).
+  exec(function(err,result){
+    console.log("RESULT OF ..."+result);
+totObjInS3=result[0].totObjects;
+console.log("totObjInS3"+totObjInS3+"noOfObjInGlacier"+noOfObjInGlacier);
       for(var i in result){
-        var d=new Date(result[i].timestamp);
+         console.log("RESULT.............."+result);
+        var d=result[i].timestamp;
+       
           if(d<d2){
+            console.log("INSIDE IF");
              status="Failure";
           } 
-          else if(result[i].status=="S"){
+
+          else if(totObjInS3>noOfObjInGlacier){
+
                status="Success";
           }
           else{
@@ -150,6 +198,8 @@ function trackFailure(callback){
           }
       }
       callback(status);
+  });
+  
     });
 }
 
@@ -158,7 +208,7 @@ function trackFailureReport(callback){
    var statusArray=new Array();
    var date=today.toDateString();
    
-    s3Copy.find({timestamp:{$regex:date}},function(err,result){
+    s3Copy.find({timestampString:{$regex:date}},function(err,result){
      
       for(var i in result){
           
@@ -166,6 +216,94 @@ function trackFailureReport(callback){
       }
       callback(JSON.stringify(statusArray));
     });
+}
+
+
+//getCopyStats();
+function getCopyStats(callback){
+  var statusArray=new Array();
+  var testArray=new Array();
+  var finalArray=new Array();
+  var totObj;
+  var group = {
+   key: {groupId:""},
+   //cond: {uploadToGlacierStatus:{$regex:"Uploading File "}},
+   cond:{uploadToGlacierStatus:{$regex:"Uploading File "}},
+
+   reduce: function(doc, out) {
+      if(doc['status']=='S'){
+         out.succeded++;
+      }  
+      else{
+        out.failed++;
+      }   
+      out.total += doc.value;
+   },
+   initial: {
+       total: 0,
+       succeded: 0,
+       failed:0
+   },
+   finalize: function(out) {
+       out.total=out.failed+out.succeded;
+   }
+};
+var count  =0;
+s3Copy.collection.group(group.key, group.cond, group.initial, group.reduce, group.finalize, 
+  true, function(err, results) {
+    if(err){
+      console.log("ERROR"+err);
+    }
+    console.log('group results %j', results);
+    count= results.length;
+    for(var i in results){
+
+       var cp = new Object();
+       cp['succeded']      =results[i].succeded;
+       cp['failed']=results[i].failed;
+       cp['date']="0-00-0000";
+       cp['source']=null;
+       cp['dest']=null;
+       cp['totObj']=0;
+      statusArray[results[i].groupId] = cp;
+            
+  s3ObjCnt.find({groupId:results[i].groupId}).sort({timestamp:-1}).limit(1).
+  exec(function(err,result){
+    if(err){
+      console.log("ERROR"+err);
+    }
+    count--;
+    
+if(result==""){
+  
+}
+else{
+   
+totObj=result[0].totObjects;
+     gpId = result[0].groupId.split("_");
+       date=gpId[1];
+       source=gpId[2];
+       dest=gpId[3];
+     var copyParams = statusArray[result[0].groupId]; 
+  copyParams['date']=date;
+  copyParams['source']=source;
+  copyParams['dest']=dest;
+  copyParams['totObj']=totObj;
+    }
+   if(count==0){
+   for(var key in statusArray){
+    testArray.push(statusArray[key]);
+      console.log(" sadasd "+JSON.stringify(statusArray)+"KEY"+key+"TESTARRAY"+JSON.stringify(testArray));
+      
+   }
+   callback(JSON.stringify(testArray));
+  }
+  
+  });
+ }
+
+});
+
 }
 
 exports.siteMonitoringStatus = function(req,res) {
@@ -182,6 +320,17 @@ exports.siteMonitoringDetailedReport = function(req, res) {
   });
 };
 
+
+
+exports.copyStats=function(req,res){
+getCopyStats(function(response){
+res.send(response);
+res.end();
+
+});
+}
+
+
 function monitorParams(trackReportStatus,timestamp,gpId,status){
 
     this.trackReportStatus=trackReportStatus;
@@ -191,3 +340,5 @@ function monitorParams(trackReportStatus,timestamp,gpId,status){
   
 
 }
+ 
+
