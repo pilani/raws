@@ -8,14 +8,15 @@ var track=require('./Tracking.js');
 
 //launchS3CountA();
 
-exports.launchS3Count=function launchS3Count(){
+function launchS3Count(){
+	console.log("count Objects in S3 launched");
 
-	//logic of counting
-
-	setTimeout(launchS3CountA,1000*60*60);
+	launchS3ObjCount();
+	setTimeout(launchS3Count,1000*60*60*5);
 }
+exports.launchS3Count=launchS3Count;
 
-function launchS3CountA(){
+function launchS3ObjCount(){
 
     console.log("launchS3Count launched");
     var kvmap = cfg.config["KEY_REGION_S3_GLACIER"];  
@@ -40,7 +41,7 @@ function getCountOfObjectsInS3(creds,callback){
 	var gpId=generateGroupId(creds,cfg.config["KEY_REGION_S3_GLACIER"][creds][0].sorce,cfg.config["KEY_REGION_S3_GLACIER"][creds][0].dest);  
 
     async.waterfall([function dummy(callback){callback(null, creds,gpId);} ,s3Client.getSrcS3Client,
-      s3Client.getDestGlacierClient,getListOfBuckets,createArray,countObjects],
+      s3Client.getDestGlacierClient,getListOfBuckets,createArray,filterBuckets,countObjects],
         function(err,result ){
         if(err){
            //trackProcess("finalWaterfallCall","error in calling async.waterfall for account "+credentials+ " MESSAGE : "+err,gpId,"F");
@@ -69,19 +70,22 @@ function getListOfBuckets(srcS3,desGlacier,account,gpId,callback){
 
 
 function createArray(data,s3,gpId,callback){
-	console.log("inside createArray....");
+	
+console.log("inside createArray....");
+console.log("DATA"+data);
 	var bucketArray=new Array();
 	var objArr=new Array();
-/*bucketArray[0]="apacrdatakeyvaluemapsfailure";
-bucketArray[1]="317993448580-ap-northeast-1";
+//bucketArray[0]="lis-busimages";
+/*bucketArray[1]="317993448580-ap-northeast-1";
 bucketArray[2]="cv-log-99586e526342f5f0dd4cebfd8bdf7b2b";
 bucketArray[3]="cloudwatchscript";
-bucketArray[4]="tests3toglacier";*/
-
+bucketArray[4]="tests3toglacier";
+*/
 for(var i in data.Buckets){
-bucketArray[i]=new createObjArray(data.Buckets[i].Name,s3,gpId);
+objArr[i]=new createObjArray(data.Buckets[i].Name,s3,gpId);
 
-}/*
+}
+/*
 for(var i in bucketArray){
 objArr[i]=new createObjArray(bucketArray[i],s3,gpId);
 }*/
@@ -96,10 +100,41 @@ this.gpId=gpId;
 //totObj=totObj;
 
 }
+function filterBuckets(bucketArray,callback){
+  console.log("Filtering objects");
+ // trackProcess("filterBuckets","Filtering buckets only present in ap-southeast-1 Region",bucketArray.gpId,"S");
 
+  async.filter(bucketArray,filterBucketsIterator,function(result){
+
+    if(result){
+        console.log("RESULT" + JSON.stringify(result));
+        callback(null,result);
+    }
+  });
+
+}
+
+function filterBucketsIterator(bucket,callback){
+  
+ var obj1={Bucket:bucket.bucket};
+    bucket.s3.client.getBucketLocation(obj1,function(error,data){
+      if(error){
+        console.log("error"+error)
+//        trackProcess("filterBucketStatus","Filter buckets failed because "+error,bucket.gpId,"F");
+      }else{
+       //console.log("DATA" + JSON.stringify(data));
+          if(data.LocationConstraint=="ap-southeast-1"){
+            callback(true);
+          }   
+          else{
+            callback(false);
+          }
+      }
+  });
+}
 
 function countObjects(bucketArray,callback){
-	console.log("inside countObjects....");
+
 
 	async.map(bucketArray,iterator,function(err,results){
 
@@ -111,8 +146,8 @@ else{
   var totObjects=0;
 	console.log("FINAL SERIES CALLACK..TOT OBJECTS ARE"+JSON.stringify(results));
   for(var i in results){
-totObjects+=results[i].b;
-var gpId=results[0].a;
+totObjects+=results[i].totObj;
+var gpId=results[0].gpId;
 
   }
   track.saves3objcount(totObjects,new Date(),gpId);
@@ -167,16 +202,16 @@ function calculateObjects(bucket,s3,gpId,totObj,keymarker,objArray,callback){
         //callback(null,map,bucket);
         console.log("Total Objects"+totObj);
 
-        callback(null,new abc(gpId,totObj));
+        callback(null,new getFinalObjects(gpId,totObj));
       }
     }
   });
 
 }
-function abc(a,b){
+function getFinalObjects(gpId,totObj){
 
-  this.a=a;
-  this.b=b;
+  this.totObj=totObj;
+  this.gpId=gpId;
 }
 
 function generateGroupId(account,sorce,dest){
@@ -197,3 +232,4 @@ function generateGroupId(account,sorce,dest){
    return account+"_"+today+"_"+sorce+"_"+dest;
 
 }
+
