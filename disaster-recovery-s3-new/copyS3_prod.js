@@ -461,11 +461,14 @@ function readAndUpload(fromPathArray,callback){
 function uploadBucketDataIterator(fromPathArray,callback) {
 	async.waterfall([function dummy(callback){callback(null, fromPathArray.path,fromPathArray.desGlacier,fromPathArray.fileName,fromPathArray.gpId,fromPathArray.archiveDes,fromPathArray.objMap);}
     ,readFilesFromDirectory,calculateCheckSum,uploadToGlacier,logGMetadata],
+    //deepika  logmetdadta is useless it wont get call if uploadTOGlacier return callback(err)
+    //just do the logging in if(err) loop of finalcallback check for HERE
     function(err,result){
 
 		  if(err){
+		  	//deeepika HERE
         trackProcess("uploadBucketDataStatus"," Error in uploadBucketDataIterator" + err,fromPathArray.gpId,"F");    
- 			  callback(err);
+ 			  callback(err);//deepika ,, u cant do callback(err) here jus do callback(null)
  		 }
  		 else{
       trackProcess("uploadBucketDataStatus","uploadBucketDataIterator success",fromPathArray.gpId,"S");    
