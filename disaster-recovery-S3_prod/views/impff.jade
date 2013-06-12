@@ -1,0 +1,20 @@
+html
+head
+  title RDATA Stats
+  link(rel='stylesheet', href='/stylesheets/bqhome.css')
+  script(type='text/javascript', src='/js/jquery-1.7.1.min.js')   
+  script(type='text/javascript', src='/js/jquery.blockUI.js')
+  script(type='text/javascript')	 function initFailedFile()	{	$.getJSON("/bqFailedFiles",function(data){	var html='<table id="testTable" border="1"><thead><tr><th>File Name</th></tr></thead><tbody>';	for(var obj in data){	html+='<tr><td>'+data[obj].name+'</tr></td>';	}	$('#divFailedFiles').append(html);	}).error(function(xhr,status,error) { alert("No Data Found"); });	}
+  body(onload="initFailedFile()")#page2
+    ul#tabs
+      li#tab1
+        a(href='/bqhome') Import Pending Files
+      li#tab2
+        a(href='/impff') Import Failed Files
+      li#tab3
+        a(href='/rmqhcs') RabbitMQ Health Checks Stats
+br
+#divFailedFiles
+      div
+
+

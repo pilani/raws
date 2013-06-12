@@ -1,0 +1,16 @@
+html
+head
+   title Disaster Recovery Stats
+   link(rel='stylesheet', href='/stylesheets/bqhome.css')
+   script(type='text/javascript', src='/js/jquery-1.7.1.min.js')   
+   script(type='text/javascript', src='/js/jquery.blockUI.js')
+   script(type='text/javascript')	 function initSiteMonitor()	{	$.getJSON("/siteMonitorReport",function(data){	alert(data);	var html='<table id="testTable" border="1"><thead><tr><th>STATS</th></tr></thead><tbody>';	for(var obj in data){	html+='<tr><td>'+data[obj].trackReportStatus+' At '+data[obj].timestamp+' for GroupId '+data[obj].gpId+' With status '+data[obj].status+'</tr></td>';	}	$('#divSiteMonitoring').append(html);	}).error(function(xhr,status,error) { alert("No Data Found"); });	} 
+  body(onload="initSiteMonitor()")#page2
+  	ul#tabs
+      li#tab1
+        a(href='/copyStats') Disaster Recovery Copy Stats
+      li#tab2
+        a(href='/siteMonitor') Disaster Recovery Stats
+br
+#divSiteMonitoring
+	  div
