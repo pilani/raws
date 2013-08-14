@@ -1,0 +1,14 @@
+html
+head
+   title screen 1
+   link(rel='stylesheet', href='/stylesheets/bqhome.css')
+   script(type='text/javascript', src='/js/jquery-1.7.1.min.js')   
+   script(type='text/javascript', src='/js/jquery.blockUI.js')
+   script(type='text/javascript')	 function abc()	{	$.getJSON("/rcsScreen1",function(data){	alert(data);	var html='<table id="testTable" border="1"><thead><tr><th>Cpu Utilization</th><th>Memory Utilization</th><th>Network (MB)</th></tr></thead><tbody>';		html+='<tr><td>'+data.cpu+'</td><td>'+data.memory+'</td><td>'+data.network+'</td></tr>';		$('#divscreen1').append(html);	}).error(function(xhr,status,error) { alert("No Data Found"); });	} 
+  body(onload="abc()")#page1
+  ul#tabs
+      li#tab1
+        a(href='/screen1') rcs screen1
+           
+br
+div#divscreen1

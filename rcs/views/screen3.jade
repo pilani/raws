@@ -1,0 +1,14 @@
+html
+head
+   title screen 3
+   link(rel='stylesheet', href='/stylesheets/bqhome.css')
+   script(type='text/javascript', src='/js/jquery-1.7.1.min.js')   
+   script(type='text/javascript', src='/js/jquery.blockUI.js')
+   script(type='text/javascript')	 function abc()	{	$.getJSON("/rcsScreen3",function(data){	alert(data);	var html='<table id="testTable" border="1"><thead><tr><th>Security Group</th><th># Instances</th><th># Zone A</th><th># Zone B</th><th>Platform</th><th>Instance Type</th><th>CPU Utilization (Avg of last 1 hour)</th><th>Memory Utilization (Avg of last 1 hour)</th><th>Network (in MB)</th></tr></thead><tbody>';	for(var i in data){	html+='<tr><td>'+data[i].name+'</td><td>'+data[i].instances.length+'</td><td>'+data[i].zoneA+'</td><td>'+data[i].zoneB+'</td><td>'+data[i].platform+'</td><td>'+data[i].instanceType+'</td><td>'+data[i].cpu+'</td><td>'+data[i].memory+'</td><td>'+data[i].network+'</td></tr>';	}	$('#divscreen3').append(html);	}).error(function(xhr,status,error) { alert("No Data Found"); });	} 
+  body(onload="abc()")#page1
+  ul#tabs
+      li#tab1
+        a(href='/screen3') rcs screen3
+           
+br
+div#divscreen3
